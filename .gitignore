@@ -1,0 +1,21 @@
+# Gradle
+.gradle/
+build/
+**/build/
+
+# Local SDK/JDK paths
+local.properties
+
+# IntelliJ / Android Studio
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# Kotlin/Java
+*.class
+*.log
+
+# OS
+.DS_Store
+Thumbs.db

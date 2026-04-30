@@ -48,6 +48,7 @@ Aplikasi ini menggunakan Cloud Firestore dengan struktur NoSQL:
 3. Hubungkan project dengan Firebase milik Anda sendiri (Tambahkan file `google-services.json` ke dalam direktori `app/`).
 4. Lakukan *Sync Project with Gradle Files* untuk mengunduh semua dependensi.
 5. Jalankan aplikasi (Run) pada Android Emulator atau perangkat Android asli (Minimal Android 7.0 / API 24).
+6. Pastikan koneksi internet aktif untuk sinkronisasi data *real-time*.
 
 ---
 *Project UAS - Mata Kuliah Pemrograman Perangkat Bergerak*

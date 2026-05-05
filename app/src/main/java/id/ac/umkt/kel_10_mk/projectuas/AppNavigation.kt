@@ -9,6 +9,7 @@ import androidx.navigation.compose.rememberNavController
 private const val RouteLogin = "login"
 private const val RouteRegister = "register"
 private const val RouteForgot = "forgot"
+private const val RouteDashboardMahasiswa = "dashboard-mahasiswa"
 
 @Composable
 fun AppNavigation(
@@ -20,7 +21,7 @@ fun AppNavigation(
     ) {
         composable(RouteLogin) {
             LoginScreen(
-                onLoginClick = { _, _ -> },
+                onLoginClick = { _, _ -> navController.navigate(RouteDashboardMahasiswa) },
                 onRegisterClick = { navController.navigate(RouteRegister) },
                 onForgotClick = { navController.navigate(RouteForgot) },
             )
@@ -38,6 +39,9 @@ fun AppNavigation(
                 onSendClick = { },
                 onLoginClick = { navController.popBackStack() },
             )
+        }
+        composable(RouteDashboardMahasiswa) {
+            DashboardMahasiswaScreen()
         }
     }
 }

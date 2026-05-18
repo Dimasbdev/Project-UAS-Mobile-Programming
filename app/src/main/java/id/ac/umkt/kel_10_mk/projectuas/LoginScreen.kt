@@ -5,6 +5,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -12,6 +13,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
@@ -48,8 +50,6 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.text.font.Font
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -60,22 +60,17 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.view.WindowCompat
 import kotlinx.coroutines.delay
-
-private val BackgroundColor = Color(0xFF0A0E1A)
-private val AccentColor = Color(0xFF00D4AA)
-private val PrimaryTextColor = Color(0xFFF9FAFB)
-private val SecondaryTextColor = Color(0xFF9CA3AF)
-private val DividerTextColor = Color(0xFF6B7280)
-private val ErrorColor = Color(0xFFEF4444)
-private val CardColor = Color(0xFF1A1F2E)
-private val FieldBorderColor = Color(0xFF2D3748)
-private val PlaceholderColor = Color(0xFF4B5563)
-private val SpaceGrotesk = FontFamily(
-    Font(R.font.space_grotesk_regular, FontWeight.Normal),
-    Font(R.font.space_grotesk_medium, FontWeight.Medium),
-    Font(R.font.spacegrotesk_semibold, FontWeight.SemiBold),
-    Font(R.font.space_grotesk_bold, FontWeight.Bold),
-)
+import id.ac.umkt.kel_10_mk.projectuas.ui.theme.ParkirAccent
+import id.ac.umkt.kel_10_mk.projectuas.ui.theme.ParkirBackground
+import id.ac.umkt.kel_10_mk.projectuas.ui.theme.ParkirDanger
+import id.ac.umkt.kel_10_mk.projectuas.ui.theme.ParkirDivider
+import id.ac.umkt.kel_10_mk.projectuas.ui.theme.ParkirInactive
+import id.ac.umkt.kel_10_mk.projectuas.ui.theme.ParkirInputBorder
+import id.ac.umkt.kel_10_mk.projectuas.ui.theme.ParkirPlaceholder
+import id.ac.umkt.kel_10_mk.projectuas.ui.theme.ParkirSurface
+import id.ac.umkt.kel_10_mk.projectuas.ui.theme.ParkirTextPrimary
+import id.ac.umkt.kel_10_mk.projectuas.ui.theme.ParkirTextSecondary
+import id.ac.umkt.kel_10_mk.projectuas.ui.theme.SpaceGroteskFamily
 
 private fun isValidCampusEmail(value: String): Boolean =
     value.isNotBlank() && value.contains(".ac.id")
@@ -85,7 +80,8 @@ private fun isValidPassword(value: String): Boolean =
 
 @Composable
 fun LoginScreen(
-    onLoginClick: (email: String, password: String) -> Unit,
+    onLoginMahasiswa: (email: String, password: String) -> Unit,
+    onLoginPetugas: (email: String, password: String) -> Unit = onLoginMahasiswa,
     onRegisterClick: () -> Unit,
     onForgotClick: () -> Unit,
 ) {
@@ -94,7 +90,7 @@ fun LoginScreen(
 
     SideEffect {
         (context as? Activity)?.window?.run {
-            statusBarColor = BackgroundColor.toArgb()
+            statusBarColor = ParkirBackground.toArgb()
             WindowCompat.getInsetsController(this, view).isAppearanceLightStatusBars = false
         }
     }
@@ -103,10 +99,11 @@ fun LoginScreen(
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
     var isLoading by remember { mutableStateOf(false) }
+    var activeLoginRole by remember { mutableStateOf("mahasiswa") }
     var emailError by remember { mutableStateOf<String?>(null) }
     var passwordError by remember { mutableStateOf<String?>(null) }
 
-    fun validateAndSubmit() {
+    fun validateAndSubmit(onSuccess: (String, String) -> Unit, role: String) {
         val trimmedEmail = email.trim()
         emailError = when {
             trimmedEmail.isBlank() -> "Email kampus wajib diisi"
@@ -121,7 +118,8 @@ fun LoginScreen(
 
         if (emailError == null && passwordError == null) {
             isLoading = true
-            onLoginClick(trimmedEmail, password)
+            activeLoginRole = role
+            onSuccess(trimmedEmail, password)
         }
     }
 
@@ -136,21 +134,21 @@ fun LoginScreen(
         focusedContainerColor = Color.Transparent,
         unfocusedContainerColor = Color.Transparent,
         disabledContainerColor = Color.Transparent,
-        focusedTextColor = PrimaryTextColor,
-        unfocusedTextColor = PrimaryTextColor,
-        focusedPlaceholderColor = PlaceholderColor,
-        unfocusedPlaceholderColor = PlaceholderColor,
-        cursorColor = AccentColor,
-        focusedBorderColor = AccentColor,
-        unfocusedBorderColor = FieldBorderColor,
-        errorBorderColor = ErrorColor,
-        errorPlaceholderColor = PlaceholderColor,
+        focusedTextColor = ParkirTextPrimary,
+        unfocusedTextColor = ParkirTextPrimary,
+        focusedPlaceholderColor = ParkirPlaceholder,
+        unfocusedPlaceholderColor = ParkirPlaceholder,
+        cursorColor = ParkirAccent,
+        focusedBorderColor = ParkirAccent,
+        unfocusedBorderColor = ParkirInputBorder,
+        errorBorderColor = ParkirDanger,
+        errorPlaceholderColor = ParkirPlaceholder,
     )
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(BackgroundColor)
+            .background(ParkirBackground)
             .systemBarsPadding()
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 24.dp),
@@ -165,8 +163,8 @@ fun LoginScreen(
         ) {
             Text(
                 text = "PARKIRUMKT",
-                color = AccentColor,
-                fontFamily = SpaceGrotesk,
+                color = ParkirAccent,
+                fontFamily = SpaceGroteskFamily,
                 fontWeight = FontWeight.Black,
                 fontSize = 30.sp,
                 letterSpacing = 2.6.sp,
@@ -176,7 +174,7 @@ fun LoginScreen(
 
             Text(
                 text = "Parkir Cerdas, Kampus Lancar",
-                color = SecondaryTextColor,
+                color = ParkirTextSecondary,
                 fontSize = 15.sp,
                 fontWeight = FontWeight.Normal,
                 textAlign = TextAlign.Center,
@@ -187,13 +185,13 @@ fun LoginScreen(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(CardColor, RoundedCornerShape(14.dp))
-                    .border(BorderStroke(1.dp, FieldBorderColor.copy(alpha = 0.75f)), RoundedCornerShape(14.dp))
+                    .background(ParkirSurface, RoundedCornerShape(14.dp))
+                    .border(BorderStroke(1.dp, ParkirInputBorder.copy(alpha = 0.75f)), RoundedCornerShape(14.dp))
                     .padding(horizontal = 25.dp, vertical = 24.dp),
             ) {
                 Text(
                     text = "EMAIL KAMPUS",
-                    color = SecondaryTextColor,
+                    color = ParkirTextSecondary,
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Bold,
                     letterSpacing = 1.3.sp,
@@ -211,12 +209,16 @@ fun LoginScreen(
                     },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(50.dp),
+                        .heightIn(min = 56.dp),
                     singleLine = true,
                     placeholder = { Text(text = "nim@umkt.ac.id") },
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Email,
                         imeAction = ImeAction.Next,
+                    ),
+                    textStyle = MaterialTheme.typography.bodyLarge.copy(
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Medium,
                     ),
                     isError = emailError != null,
                     shape = RoundedCornerShape(8.dp),
@@ -227,7 +229,7 @@ fun LoginScreen(
                     Spacer(modifier = Modifier.height(6.dp))
                     Text(
                         text = emailError.orEmpty(),
-                        color = ErrorColor,
+                        color = ParkirDanger,
                         fontSize = 11.sp,
                     )
                 }
@@ -236,7 +238,7 @@ fun LoginScreen(
 
                 Text(
                     text = "PASSWORD",
-                    color = SecondaryTextColor,
+                    color = ParkirTextSecondary,
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Bold,
                     letterSpacing = 1.3.sp,
@@ -254,14 +256,20 @@ fun LoginScreen(
                     },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(50.dp),
+                        .heightIn(min = 56.dp),
                     singleLine = true,
                     placeholder = { Text(text = "••••••••") },
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Password,
                         imeAction = ImeAction.Done,
                     ),
-                    keyboardActions = KeyboardActions(onDone = { validateAndSubmit() }),
+                    textStyle = MaterialTheme.typography.bodyLarge.copy(
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Medium,
+                    ),
+                    keyboardActions = KeyboardActions(
+                        onDone = { validateAndSubmit(onLoginMahasiswa, "mahasiswa") },
+                    ),
                     visualTransformation = if (passwordVisible) {
                         VisualTransformation.None
                     } else {
@@ -272,7 +280,7 @@ fun LoginScreen(
                             Icon(
                                 imageVector = if (passwordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
                                 contentDescription = if (passwordVisible) "Sembunyikan password" else "Tampilkan password",
-                                tint = SecondaryTextColor,
+                                tint = ParkirTextSecondary,
                                 modifier = Modifier.size(20.dp),
                             )
                         }
@@ -286,7 +294,7 @@ fun LoginScreen(
                     Spacer(modifier = Modifier.height(6.dp))
                     Text(
                         text = passwordError.orEmpty(),
-                        color = ErrorColor,
+                        color = ParkirDanger,
                         fontSize = 11.sp,
                     )
                 }
@@ -298,7 +306,7 @@ fun LoginScreen(
                     modifier = Modifier
                         .align(Alignment.Start)
                         .clickable(role = Role.Button) { onForgotClick() },
-                    color = AccentColor,
+                    color = ParkirAccent,
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Medium,
                 )
@@ -306,89 +314,70 @@ fun LoginScreen(
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            Button(
-                onClick = { validateAndSubmit() },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp),
-                enabled = !isLoading,
-                shape = RoundedCornerShape(10.dp),
-                border = BorderStroke(1.dp, AccentColor.copy(alpha = 0.65f)),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = AccentColor,
-                    contentColor = BackgroundColor,
-                    disabledContainerColor = AccentColor.copy(alpha = 0.8f),
-                    disabledContentColor = BackgroundColor.copy(alpha = 0.8f),
-                ),
-            ) {
-                if (isLoading) {
-                    CircularProgressIndicator(
-                        color = BackgroundColor,
-                        strokeWidth = 2.dp,
-                        modifier = Modifier.size(20.dp),
-                    )
-                } else {
-                    Text(
-                        text = "Masuk",
-                        fontFamily = SpaceGrotesk,
-                        fontWeight = FontWeight.Bold,
-                        color = BackgroundColor,
-                    )
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Button(
+                    onClick = { validateAndSubmit(onLoginMahasiswa, "mahasiswa") },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp),
+                    enabled = !isLoading,
+                    shape = RoundedCornerShape(10.dp),
+                    border = BorderStroke(1.dp, ParkirAccent.copy(alpha = 0.65f)),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = ParkirAccent,
+                        contentColor = ParkirBackground,
+                        disabledContainerColor = ParkirAccent.copy(alpha = 0.8f),
+                        disabledContentColor = ParkirBackground.copy(alpha = 0.8f),
+                    ),
+                ) {
+                    if (isLoading && activeLoginRole == "mahasiswa") {
+                        CircularProgressIndicator(
+                            color = ParkirBackground,
+                            strokeWidth = 2.dp,
+                            modifier = Modifier.size(20.dp),
+                        )
+                    } else {
+                        Text(
+                            text = "Masuk Mahasiswa",
+                            fontFamily = SpaceGroteskFamily,
+                            fontWeight = FontWeight.Bold,
+                            color = ParkirBackground,
+                        )
+                    }
+                }
+                Button(
+                    onClick = { validateAndSubmit(onLoginPetugas, "petugas") },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp),
+                    enabled = !isLoading,
+                    shape = RoundedCornerShape(10.dp),
+                    border = BorderStroke(1.dp, ParkirAccent.copy(alpha = 0.4f)),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = ParkirSurface,
+                        contentColor = ParkirAccent,
+                        disabledContainerColor = ParkirSurface.copy(alpha = 0.7f),
+                        disabledContentColor = ParkirAccent.copy(alpha = 0.6f),
+                    ),
+                ) {
+                    if (isLoading && activeLoginRole == "petugas") {
+                        CircularProgressIndicator(
+                            color = ParkirAccent,
+                            strokeWidth = 2.dp,
+                            modifier = Modifier.size(20.dp),
+                        )
+                    } else {
+                        Text(
+                            text = "Masuk Petugas",
+                            fontFamily = SpaceGroteskFamily,
+                            fontWeight = FontWeight.Bold,
+                            color = ParkirAccent,
+                        )
+                    }
                 }
             }
 
             Spacer(modifier = Modifier.height(26.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                HorizontalDivider(
-                    modifier = Modifier.weight(1f),
-                    color = DividerTextColor.copy(alpha = 0.6f),
-                )
-                Text(
-                    text = "ATAU",
-                    modifier = Modifier.padding(horizontal = 12.dp),
-                    color = SecondaryTextColor,
-                    fontSize = 12.sp,
-                )
-                HorizontalDivider(
-                    modifier = Modifier.weight(1f),
-                    color = DividerTextColor.copy(alpha = 0.6f),
-                )
-            }
-
-            Spacer(modifier = Modifier.height(28.dp))
-
-            Button(
-                onClick = onRegisterClick,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp),
-                shape = RoundedCornerShape(10.dp),
-                border = BorderStroke(1.dp, FieldBorderColor),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = CardColor,
-                    contentColor = PrimaryTextColor,
-                ),
-            ) {
-                Text(
-                    text = "Daftar Akun Baru",
-                    fontFamily = SpaceGrotesk,
-                    fontWeight = FontWeight.Bold,
-                    color = PrimaryTextColor,
-                )
-            }
-
-            Spacer(modifier = Modifier.height(18.dp))
-
-            Text(
-                text = "Gunakan email kampus (.ac.id) untuk mendaftar",
-                color = DividerTextColor,
-                fontSize = 12.sp,
-                textAlign = TextAlign.Center,
-            )
         }
     }
 }
@@ -397,9 +386,9 @@ fun LoginScreen(
 @androidx.compose.ui.tooling.preview.Preview(showBackground = true, backgroundColor = 0xFF0A0E1A)
 private fun LoginScreenPreview() {
     MaterialTheme {
-        Box(modifier = Modifier.background(BackgroundColor)) {
+        Box(modifier = Modifier.background(ParkirBackground)) {
             LoginScreen(
-                onLoginClick = { _, _ -> },
+                onLoginMahasiswa = { _, _ -> },
                 onRegisterClick = { },
                 onForgotClick = { },
             )

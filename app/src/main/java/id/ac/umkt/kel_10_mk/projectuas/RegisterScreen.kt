@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
@@ -266,7 +267,7 @@ fun RegisterScreen(
                     },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(54.dp),
+                        .heightIn(min = 56.dp),
                     singleLine = true,
                     placeholder = { Text(text = "John Doe") },
                     leadingIcon = {
@@ -280,6 +281,10 @@ fun RegisterScreen(
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Text,
                         imeAction = ImeAction.Next,
+                    ),
+                    textStyle = MaterialTheme.typography.bodyLarge.copy(
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Medium,
                     ),
                     isError = nameError != null,
                     shape = RoundedCornerShape(10.dp),
@@ -312,7 +317,7 @@ fun RegisterScreen(
                     },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(54.dp),
+                        .heightIn(min = 56.dp),
                     singleLine = true,
                     placeholder = { Text(text = "nim@umkt.ac.id") },
                     leadingIcon = {
@@ -326,6 +331,10 @@ fun RegisterScreen(
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Email,
                         imeAction = ImeAction.Next,
+                    ),
+                    textStyle = MaterialTheme.typography.bodyLarge.copy(
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Medium,
                     ),
                     isError = emailError != null,
                     shape = RoundedCornerShape(10.dp),
@@ -358,7 +367,7 @@ fun RegisterScreen(
                     },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(54.dp),
+                        .heightIn(min = 56.dp),
                     singleLine = true,
                     placeholder = { Text(text = "••••••••") },
                     leadingIcon = {
@@ -382,6 +391,10 @@ fun RegisterScreen(
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Password,
                         imeAction = ImeAction.Next,
+                    ),
+                    textStyle = MaterialTheme.typography.bodyLarge.copy(
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Medium,
                     ),
                     visualTransformation = if (passwordVisible) {
                         VisualTransformation.None
@@ -419,7 +432,7 @@ fun RegisterScreen(
                     },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(54.dp),
+                        .heightIn(min = 56.dp),
                     singleLine = true,
                     placeholder = { Text(text = "••••••••") },
                     leadingIcon = {
@@ -443,6 +456,10 @@ fun RegisterScreen(
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Password,
                         imeAction = ImeAction.Done,
+                    ),
+                    textStyle = MaterialTheme.typography.bodyLarge.copy(
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Medium,
                     ),
                     keyboardActions = KeyboardActions(onDone = { validateAndSubmit() }),
                     visualTransformation = if (confirmPasswordVisible) {

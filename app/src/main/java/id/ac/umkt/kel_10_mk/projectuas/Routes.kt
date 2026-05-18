@@ -1,0 +1,16 @@
+package id.ac.umkt.kel_10_mk.projectuas
+
+const val RouteLogin = "login"
+const val RouteRegister = "register"
+const val RouteForgot = "forgot"
+const val RouteDashboardMahasiswa = "dashboard-mahasiswa"
+const val RouteDashboardPetugas = "dashboard-petugas"
+const val RouteMapPetugas = "map-petugas"
+const val RouteHistoryPetugas = "history-petugas"
+const val RouteProfilePetugas = "profile-petugas"
+const val RouteUpdateKondisiPetugas = "update-kondisi-petugas"
+const val RouteHistoryMahasiswa = "history-mahasiswa"
+const val RouteMapMahasiswa = "map-mahasiswa"
+const val RouteProfileMahasiswa = "profile-mahasiswa"
+const val RouteNotificationsMahasiswa = "notifications-mahasiswa"
+const val RouteLocationPermissionMahasiswa = "location-permission-mahasiswa"

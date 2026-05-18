@@ -24,13 +24,17 @@ import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Map
-import androidx.compose.material3.Text
+import androidx.compose.material.icons.filled.VerifiedUser
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -43,7 +47,6 @@ import id.ac.umkt.kel_10_mk.projectuas.ui.components.ParkirBottomNavBar
 import id.ac.umkt.kel_10_mk.projectuas.ui.components.ParkirTopBar
 import id.ac.umkt.kel_10_mk.projectuas.ui.components.ParkingStatusBar
 import id.ac.umkt.kel_10_mk.projectuas.ui.components.StatusBadge
-import id.ac.umkt.kel_10_mk.projectuas.ui.components.StatusChip
 import id.ac.umkt.kel_10_mk.projectuas.ui.theme.ParkirAccent
 import id.ac.umkt.kel_10_mk.projectuas.ui.theme.ParkirBackground
 import id.ac.umkt.kel_10_mk.projectuas.ui.theme.ParkirDanger
@@ -55,7 +58,7 @@ import id.ac.umkt.kel_10_mk.projectuas.ui.theme.ParkirWarning
 import id.ac.umkt.kel_10_mk.projectuas.ui.theme.SpaceGroteskFamily
 
 @Composable
-fun DashboardMahasiswaScreen(navController: NavHostController) {
+fun DashboardPetugasScreen(navController: NavHostController) {
     val view = androidx.compose.ui.platform.LocalView.current
     val context = androidx.compose.ui.platform.LocalContext.current
 
@@ -68,10 +71,10 @@ fun DashboardMahasiswaScreen(navController: NavHostController) {
 
     val areas = remember {
         listOf(
-            ParkingArea("Parkiran A", "Gedung A", ParkingStatus.SEPI, 5),
-            ParkingArea("Parkiran B", "Gedung B", ParkingStatus.SEDANG, 8),
-            ParkingArea("Parkiran C", "Gedung C", ParkingStatus.PENUH, 1),
-            ParkingArea("Parkiran D", "Gedung D", ParkingStatus.SEPI, 12),
+            ParkingArea("Parkiran A", "Gedung A", ParkingStatus.SEDANG, 4),
+            ParkingArea("Parkiran B", "Gedung B", ParkingStatus.PENUH, 1),
+            ParkingArea("Parkiran C", "Gedung C", ParkingStatus.SEPI, 9),
+            ParkingArea("Parkiran D", "Gedung D", ParkingStatus.SEDANG, 6),
         )
     }
 
@@ -86,10 +89,10 @@ fun DashboardMahasiswaScreen(navController: NavHostController) {
             ParkirBottomNavBar(
                 navController = navController,
                 items = listOf(
-                    BottomNavItemData("Home", Icons.Default.Home, RouteDashboardMahasiswa),
-                    BottomNavItemData("Map", Icons.Default.Map, RouteMapMahasiswa),
-                    BottomNavItemData("History", Icons.Default.History, RouteHistoryMahasiswa),
-                    BottomNavItemData("Profile", Icons.Default.AccountCircle, RouteProfileMahasiswa),
+                    BottomNavItemData("Home", Icons.Default.Home, RouteDashboardPetugas),
+                    BottomNavItemData("Map", Icons.Default.Map, RouteMapPetugas),
+                    BottomNavItemData("History", Icons.Default.History, RouteHistoryPetugas),
+                    BottomNavItemData("Profile", Icons.Default.AccountCircle, RouteProfilePetugas),
                 ),
             )
         },
@@ -103,10 +106,9 @@ fun DashboardMahasiswaScreen(navController: NavHostController) {
                 .padding(horizontal = 20.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            item { ParkirTopBar() }
-
-            item { GreetingSection() }
-
+            item { ParkirTopBar(showAction = false) }
+            item { PetugasHeader() }
+            item { RoleChip() }
             item {
                 StatusSummaryCard(
                     sepiCount = summary[ParkingStatus.SEPI] ?: 0,
@@ -114,34 +116,66 @@ fun DashboardMahasiswaScreen(navController: NavHostController) {
                     penuhCount = summary[ParkingStatus.PENUH] ?: 0,
                 )
             }
-
-            items(areas) { area ->
-                ParkingAreaCard(area = area)
+            item {
+                Text(
+                    text = "Kelola Kondisi Parkir",
+                    color = ParkirTextPrimary,
+                    fontFamily = SpaceGroteskFamily,
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 18.sp,
+                )
             }
-
+            items(areas) { area ->
+                PetugasAreaCard(area = area, navController = navController)
+            }
             item { Spacer(modifier = Modifier.height(12.dp)) }
         }
     }
 }
 
 @Composable
-private fun GreetingSection() {
+private fun PetugasHeader() {
     Column(
         modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
         Text(
-            text = "Selamat pagi, John!",
+            text = "Selamat pagi, Petugas",
             color = ParkirTextPrimary,
             fontFamily = SpaceGroteskFamily,
             fontWeight = FontWeight.SemiBold,
-            fontSize = 22.sp,
+            fontSize = 24.sp,
         )
         Text(
-            text = "08:24 WITA - RABU, 23 APRIL 2025",
-            color = ParkirAccent,
+            text = "08:24 WITA - Rabu, 23 April 2026",
+            color = ParkirTextSecondary,
             fontSize = 12.sp,
             letterSpacing = 1.1.sp,
+        )
+    }
+}
+
+@Composable
+private fun RoleChip() {
+    Row(
+        modifier = Modifier
+            .background(ParkirSurface, RoundedCornerShape(999.dp))
+            .border(BorderStroke(1.dp, ParkirAccent.copy(alpha = 0.6f)), RoundedCornerShape(999.dp))
+            .padding(horizontal = 14.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        androidx.compose.material3.Icon(
+            imageVector = Icons.Default.VerifiedUser,
+            contentDescription = "Petugas",
+            tint = ParkirAccent,
+            modifier = Modifier.size(16.dp),
+        )
+        Text(
+            text = "Petugas Parkir",
+            color = ParkirAccent,
+            fontWeight = FontWeight.SemiBold,
+            fontSize = 12.sp,
         )
     }
 }
@@ -155,8 +189,8 @@ private fun StatusSummaryCard(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .background(ParkirSurface, RoundedCornerShape(16.dp))
-            .border(BorderStroke(1.dp, ParkirDivider), RoundedCornerShape(16.dp))
+            .background(ParkirSurface, RoundedCornerShape(18.dp))
+            .border(BorderStroke(1.dp, ParkirDivider), RoundedCornerShape(18.dp))
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
@@ -167,22 +201,13 @@ private fun StatusSummaryCard(
             fontWeight = FontWeight.SemiBold,
             fontSize = 16.sp,
         )
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
-        ) {
-            StatusChip(label = "$sepiCount Area Sepi", color = ParkirAccent)
-            StatusChip(label = "$sedangCount Area Sedang", color = ParkirWarning)
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            StatusPill(label = "$sepiCount Area Sepi", color = ParkirAccent)
+            StatusPill(label = "$sedangCount Area Sedang", color = ParkirWarning)
         }
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
-        ) {
-            StatusChip(label = "$penuhCount Area Penuh", color = ParkirDanger)
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            StatusPill(label = "$penuhCount Area Penuh", color = ParkirDanger)
         }
-
         Text(
             text = "Terakhir diperbarui 3 menit lalu",
             color = ParkirTextSecondary,
@@ -192,7 +217,31 @@ private fun StatusSummaryCard(
 }
 
 @Composable
-private fun ParkingAreaCard(area: ParkingArea) {
+private fun StatusPill(label: String, color: Color) {
+    Row(
+        modifier = Modifier
+            .background(color.copy(alpha = 0.12f), RoundedCornerShape(999.dp))
+            .border(BorderStroke(1.dp, color.copy(alpha = 0.4f)), RoundedCornerShape(999.dp))
+            .padding(horizontal = 12.dp, vertical = 6.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Box(
+            modifier = Modifier
+                .size(8.dp)
+                .background(color, CircleShape),
+        )
+        Text(
+            text = label,
+            color = color,
+            fontSize = 12.sp,
+            fontWeight = FontWeight.SemiBold,
+        )
+    }
+}
+
+@Composable
+private fun PetugasAreaCard(area: ParkingArea, navController: NavHostController) {
     val statusColor = when (area.status) {
         ParkingStatus.SEPI -> ParkirAccent
         ParkingStatus.SEDANG -> ParkirWarning
@@ -236,5 +285,21 @@ private fun ParkingAreaCard(area: ParkingArea) {
             color = ParkirTextSecondary,
             fontSize = 12.sp,
         )
+
+        OutlinedButton(
+            onClick = { navController.navigate(RouteUpdateKondisiPetugas) },
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(12.dp),
+            border = BorderStroke(1.dp, ParkirDivider),
+            colors = ButtonDefaults.outlinedButtonColors(
+                contentColor = ParkirTextPrimary,
+            ),
+        ) {
+            Text(
+                text = "Update Kondisi",
+                fontSize = 13.sp,
+                fontWeight = FontWeight.SemiBold,
+            )
+        }
     }
 }

@@ -6,11 +6,6 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 
-private const val RouteLogin = "login"
-private const val RouteRegister = "register"
-private const val RouteForgot = "forgot"
-private const val RouteDashboardMahasiswa = "dashboard-mahasiswa"
-
 @Composable
 fun AppNavigation(
     navController: NavHostController = rememberNavController(),
@@ -21,7 +16,8 @@ fun AppNavigation(
     ) {
         composable(RouteLogin) {
             LoginScreen(
-                onLoginClick = { _, _ -> navController.navigate(RouteDashboardMahasiswa) },
+                onLoginMahasiswa = { _, _ -> navController.navigate(RouteDashboardMahasiswa) },
+                onLoginPetugas = { _, _ -> navController.navigate(RouteDashboardPetugas) },
                 onRegisterClick = { navController.navigate(RouteRegister) },
                 onForgotClick = { navController.navigate(RouteForgot) },
             )
@@ -41,7 +37,37 @@ fun AppNavigation(
             )
         }
         composable(RouteDashboardMahasiswa) {
-            DashboardMahasiswaScreen()
+            DashboardMahasiswaScreen(navController)
+        }
+        composable(RouteDashboardPetugas) {
+            DashboardPetugasScreen(navController)
+        }
+        composable(RouteMapPetugas) {
+            MapPetugasScreen(navController)
+        }
+        composable(RouteHistoryPetugas) {
+            HistoryPetugasScreen(navController)
+        }
+        composable(RouteProfilePetugas) {
+            ProfilePetugasScreen(navController)
+        }
+        composable(RouteUpdateKondisiPetugas) {
+            UpdateKondisiScreen(navController)
+        }
+        composable(RouteMapMahasiswa) {
+            MapMahasiswaScreen(navController)
+        }
+        composable(RouteHistoryMahasiswa) {
+            HistoryMahasiswaScreen(navController)
+        }
+        composable(RouteProfileMahasiswa) {
+            ProfileMahasiswaScreen(navController)
+        }
+        composable(RouteNotificationsMahasiswa) {
+            NotificationsMahasiswaScreen(navController)
+        }
+        composable(RouteLocationPermissionMahasiswa) {
+            LocationPermissionMahasiswaScreen(navController)
         }
     }
 }

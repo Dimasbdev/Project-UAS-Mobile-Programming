@@ -53,9 +53,27 @@ import id.ac.umkt.kel_10_mk.projectuas.ui.theme.ParkirTextPrimary
 import id.ac.umkt.kel_10_mk.projectuas.ui.theme.ParkirTextSecondary
 import id.ac.umkt.kel_10_mk.projectuas.ui.theme.ParkirWarning
 import id.ac.umkt.kel_10_mk.projectuas.ui.theme.SpaceGroteskFamily
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+import java.util.TimeZone
+
+fun formatCurrentWitaTime(): String {
+    return try {
+        val sdf = SimpleDateFormat("HH:mm 'WITA' - EEEE, dd MMMM yyyy", Locale("id", "ID"))
+        sdf.timeZone = TimeZone.getTimeZone("GMT+8")
+        sdf.format(Date())
+    } catch (e: Exception) {
+        "08:00 WITA"
+    }
+}
 
 @Composable
-fun DashboardMahasiswaScreen(navController: NavHostController) {
+fun DashboardMahasiswaScreen(
+    navController: NavHostController,
+    parkingViewModel: ParkingViewModel,
+    studentName: String
+) {
     val view = androidx.compose.ui.platform.LocalView.current
     val context = androidx.compose.ui.platform.LocalContext.current
 
@@ -66,15 +84,7 @@ fun DashboardMahasiswaScreen(navController: NavHostController) {
         }
     }
 
-    val areas = remember {
-        listOf(
-            ParkingArea("Parkiran A", "Gedung A", ParkingStatus.SEPI, 5),
-            ParkingArea("Parkiran B", "Gedung B", ParkingStatus.SEDANG, 8),
-            ParkingArea("Parkiran C", "Gedung C", ParkingStatus.PENUH, 1),
-            ParkingArea("Parkiran D", "Gedung D", ParkingStatus.SEPI, 12),
-        )
-    }
-
+    val areas = parkingViewModel.parkingAreas
     val summary = remember(areas) {
         areas.groupBy { it.status }.mapValues { it.value.size }
     }
@@ -105,7 +115,7 @@ fun DashboardMahasiswaScreen(navController: NavHostController) {
         ) {
             item { ParkirTopBar() }
 
-            item { GreetingSection() }
+            item { GreetingSection(studentName) }
 
             item {
                 StatusSummaryCard(
@@ -125,28 +135,26 @@ fun DashboardMahasiswaScreen(navController: NavHostController) {
 }
 
 @Composable
-private fun GreetingSection() {
+private fun GreetingSection(studentName: String) {
     Column(
         modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
         Text(
-            text = "Selamat pagi, John!",
+            text = "Selamat pagi, $studentName!",
             color = ParkirTextPrimary,
             fontFamily = SpaceGroteskFamily,
             fontWeight = FontWeight.SemiBold,
             fontSize = 22.sp,
         )
         Text(
-            text = "08:24 WITA - RABU, 23 APRIL 2025",
+            text = formatCurrentWitaTime(),
             color = ParkirAccent,
             fontSize = 12.sp,
             letterSpacing = 1.1.sp,
         )
     }
 }
-
-@Composable
 private fun StatusSummaryCard(
     sepiCount: Int,
     sedangCount: Int,

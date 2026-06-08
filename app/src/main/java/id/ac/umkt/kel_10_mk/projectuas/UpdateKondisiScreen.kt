@@ -55,6 +55,7 @@ import id.ac.umkt.kel_10_mk.projectuas.ui.theme.ParkirTextPrimary
 import id.ac.umkt.kel_10_mk.projectuas.ui.theme.ParkirTextSecondary
 import id.ac.umkt.kel_10_mk.projectuas.ui.theme.ParkirWarning
 import id.ac.umkt.kel_10_mk.projectuas.ui.theme.SpaceGroteskFamily
+import id.ac.umkt.kel_10_mk.projectuas.models.ParkingArea
 
 private data class StatusOption(
     val status: ParkingStatus,
@@ -65,9 +66,43 @@ private data class StatusOption(
 )
 
 @Composable
-fun UpdateKondisiScreen(navController: NavHostController) {
+fun UpdateKondisiScreen(
+    navController: NavHostController,
+    areaId: String,
+    parkingViewModel: ParkingViewModel,
+    authViewModel: AuthViewModel
+) {
     val view = androidx.compose.ui.platform.LocalView.current
     val context = androidx.compose.ui.platform.LocalContext.current
+
+    androidx.compose.runtime.LaunchedEffect(areaId) {
+        parkingViewModel.loadParkingArea(areaId)
+    }
+
+    val currentArea = parkingViewModel.currentArea
+
+    var selectedStatus by remember { mutableStateOf(ParkingStatus.SEDANG) }
+    var note by remember { mutableStateOf("") }
+
+    // Set initial values once data is loaded
+    androidx.compose.runtime.LaunchedEffect(currentArea) {
+        currentArea?.let {
+            selectedStatus = it.status
+            note = it.notes
+        }
+    }
+
+    // Handle toast and navigation events
+    androidx.compose.runtime.LaunchedEffect(Unit) {
+        parkingViewModel.uiEvent.collect { event ->
+            if (event == "UPDATE_SUCCESS") {
+                android.widget.Toast.makeText(context, "Kondisi parkir berhasil diperbarui!", android.widget.Toast.LENGTH_SHORT).show()
+                navController.popBackStack()
+            } else if (event == "UPDATE_FAILURE") {
+                android.widget.Toast.makeText(context, "Gagal memperbarui kondisi parkir.", android.widget.Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
 
     SideEffect {
         (context as? Activity)?.window?.run {
@@ -75,9 +110,6 @@ fun UpdateKondisiScreen(navController: NavHostController) {
             WindowCompat.getInsetsController(this, view).isAppearanceLightStatusBars = false
         }
     }
-
-    var selectedStatus by remember { mutableStateOf(ParkingStatus.SEDANG) }
-    var note by remember { mutableStateOf("") }
 
     val options = listOf(
         StatusOption(
@@ -128,7 +160,18 @@ fun UpdateKondisiScreen(navController: NavHostController) {
         ) {
             TopBar(onBack = { navController.popBackStack() })
 
-            AreaCard(status = selectedStatus)
+            if (currentArea != null) {
+                AreaCard(area = currentArea, status = selectedStatus)
+            } else {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(80.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    androidx.compose.material3.CircularProgressIndicator(color = ParkirAccent)
+                }
+            }
 
             Text(
                 text = "Perbarui Kondisi Saat Ini",
@@ -166,7 +209,13 @@ fun UpdateKondisiScreen(navController: NavHostController) {
                 )
             }
 
-            SaveButton()
+            SaveButton(
+                onClick = {
+                    val officerName = authViewModel.currentUser?.name ?: "Petugas"
+                    parkingViewModel.updateParkingArea(areaId, selectedStatus, note, officerName)
+                },
+                isLoading = parkingViewModel.isLoading
+            )
 
             Spacer(modifier = Modifier.height(12.dp))
         }
@@ -208,7 +257,7 @@ private fun TopBar(onBack: () -> Unit) {
 }
 
 @Composable
-private fun AreaCard(status: ParkingStatus) {
+private fun AreaCard(area: ParkingArea, status: ParkingStatus) {
     val statusColor = when (status) {
         ParkingStatus.SEPI -> ParkirAccent
         ParkingStatus.SEDANG -> ParkirWarning
@@ -236,13 +285,13 @@ private fun AreaCard(status: ParkingStatus) {
             )
             Column {
                 Text(
-                    text = "Parkiran B",
+                    text = area.name.ifEmpty { "Parkiran" },
                     color = ParkirTextPrimary,
                     fontWeight = FontWeight.SemiBold,
                     fontSize = 16.sp,
                 )
                 Text(
-                    text = "Gedung B",
+                    text = area.location.ifEmpty { "Gedung" },
                     color = ParkirTextSecondary,
                     fontSize = 13.sp,
                 )
@@ -321,21 +370,28 @@ private fun StatusOptionCard(
 }
 
 @Composable
-private fun SaveButton() {
+private fun SaveButton(onClick: () -> Unit, isLoading: Boolean) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .height(54.dp)
-            .background(ParkirAccent, RoundedCornerShape(999.dp))
-            .clickable { },
+            .background(if (isLoading) ParkirAccent.copy(alpha = 0.5f) else ParkirAccent, RoundedCornerShape(999.dp))
+            .clickable(enabled = !isLoading) { onClick() },
         contentAlignment = Alignment.Center,
     ) {
-        Text(
-            text = "Simpan Perubahan",
-            color = ParkirBackground,
-            fontFamily = SpaceGroteskFamily,
-            fontWeight = FontWeight.Bold,
-            fontSize = 15.sp,
-        )
+        if (isLoading) {
+            androidx.compose.material3.CircularProgressIndicator(
+                color = ParkirBackground,
+                modifier = Modifier.size(24.dp)
+            )
+        } else {
+            Text(
+                text = "Simpan Perubahan",
+                color = ParkirBackground,
+                fontFamily = SpaceGroteskFamily,
+                fontWeight = FontWeight.Bold,
+                fontSize = 15.sp,
+            )
+        }
     }
 }

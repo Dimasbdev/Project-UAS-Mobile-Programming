@@ -32,6 +32,7 @@ import id.ac.umkt.kel_10_mk.projectuas.ui.theme.SpaceGroteskFamily
 fun AppNavigation(
     navController: NavHostController = rememberNavController(),
     authViewModel: AuthViewModel = viewModel(),
+    parkingViewModel: ParkingViewModel = viewModel(),
 ) {
     val context = LocalContext.current
 
@@ -126,10 +127,12 @@ fun AppNavigation(
                 )
             }
             composable(RouteDashboardMahasiswa) {
-                DashboardMahasiswaScreen(navController)
+                val studentName = authViewModel.currentUser?.name ?: "Mahasiswa"
+                DashboardMahasiswaScreen(navController, parkingViewModel, studentName)
             }
             composable(RouteDashboardPetugas) {
-                DashboardPetugasScreen(navController)
+                val officerName = authViewModel.currentUser?.name ?: "Petugas"
+                DashboardPetugasScreen(navController, parkingViewModel, officerName)
             }
             composable(RouteMapPetugas) {
                 MapPetugasScreen(navController)
@@ -144,8 +147,16 @@ fun AppNavigation(
                     currentUser = authViewModel.currentUser
                 )
             }
-            composable(RouteUpdateKondisiPetugas) {
-                UpdateKondisiScreen(navController)
+            composable(
+                route = RouteUpdateKondisiPetugas,
+                arguments = listOf(
+                    androidx.navigation.navArgument("areaId") {
+                        type = androidx.navigation.NavType.StringType
+                    }
+                )
+            ) { backStackEntry ->
+                val areaId = backStackEntry.arguments?.getString("areaId") ?: ""
+                UpdateKondisiScreen(navController, areaId, parkingViewModel, authViewModel)
             }
             composable(RouteMapMahasiswa) {
                 MapMahasiswaScreen(navController)

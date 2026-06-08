@@ -22,3 +22,6 @@ Thumbs.db
 
 # MCP (only config)
 .vscode/mcp.json
+
+# Firebase configuration
+app/google-services.json

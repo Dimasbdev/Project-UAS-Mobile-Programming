@@ -27,11 +27,17 @@ import androidx.compose.material.icons.filled.Logout
 import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.VerifiedUser
 import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -57,9 +63,14 @@ import id.ac.umkt.kel_10_mk.projectuas.ui.theme.ParkirSurface
 import id.ac.umkt.kel_10_mk.projectuas.ui.theme.ParkirTextPrimary
 import id.ac.umkt.kel_10_mk.projectuas.ui.theme.ParkirTextSecondary
 import id.ac.umkt.kel_10_mk.projectuas.ui.theme.SpaceGroteskFamily
+import id.ac.umkt.kel_10_mk.projectuas.models.User
 
 @Composable
-fun ProfilePetugasScreen(navController: NavHostController) {
+fun ProfilePetugasScreen(
+    navController: NavHostController,
+    onLogoutClick: () -> Unit = {},
+    currentUser: User? = null,
+) {
     val view = LocalView.current
     val context = LocalContext.current
 
@@ -69,6 +80,8 @@ fun ProfilePetugasScreen(navController: NavHostController) {
             WindowCompat.getInsetsController(this, view).isAppearanceLightStatusBars = false
         }
     }
+
+    var showLogoutDialog by remember { mutableStateOf(false) }
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -95,10 +108,17 @@ fun ProfilePetugasScreen(navController: NavHostController) {
             verticalArrangement = Arrangement.spacedBy(18.dp),
         ) {
             ParkirTopBar(showAction = false)
+            val initials = currentUser?.name?.split(" ")
+                ?.filter { it.isNotBlank() }
+                ?.mapNotNull { it.firstOrNull() }
+                ?.joinToString("")
+                ?.take(2)
+                ?.uppercase() ?: "PT"
+
             ProfileHeader(
-                initials = "PT",
-                name = "Petugas Parkir",
-                email = "petugas@umkt.ac.id",
+                initials = if (initials.isEmpty()) "PT" else initials,
+                name = currentUser?.name ?: "Petugas Parkir",
+                email = currentUser?.email ?: "petugas@umkt.ac.id",
             )
             RoleChip()
             StatsRow()
@@ -108,9 +128,54 @@ fun ProfilePetugasScreen(navController: NavHostController) {
                 fontSize = 12.sp,
                 letterSpacing = 1.2.sp,
             )
-            LogoutCard()
+            LogoutCard(onLogoutClick = { showLogoutDialog = true })
             Spacer(modifier = Modifier.height(12.dp))
         }
+    }
+
+    if (showLogoutDialog) {
+        AlertDialog(
+            onDismissRequest = { showLogoutDialog = false },
+            containerColor = ParkirSurface,
+            title = {
+                Text(
+                    text = "Konfirmasi Logout",
+                    color = ParkirTextPrimary,
+                    fontFamily = SpaceGroteskFamily,
+                    fontWeight = FontWeight.SemiBold,
+                )
+            },
+            text = {
+                Text(
+                    text = "Kamu yakin ingin keluar dari akun ini?",
+                    color = ParkirTextSecondary,
+                    fontFamily = SpaceGroteskFamily,
+                    fontSize = 13.sp,
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    showLogoutDialog = false
+                    onLogoutClick()
+                }) {
+                    Text(
+                        text = "Logout",
+                        color = ParkirDanger,
+                        fontFamily = SpaceGroteskFamily,
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showLogoutDialog = false }) {
+                    Text(
+                        text = "Batal",
+                        color = ParkirTextSecondary,
+                        fontFamily = SpaceGroteskFamily,
+                    )
+                }
+            },
+        )
     }
 }
 
@@ -246,14 +311,14 @@ private fun StatCard(
 }
 
 @Composable
-private fun LogoutCard() {
+private fun LogoutCard(onLogoutClick: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .background(ParkirSurface, RoundedCornerShape(18.dp))
             .border(BorderStroke(1.dp, ParkirDivider), RoundedCornerShape(18.dp))
             .padding(horizontal = 18.dp, vertical = 16.dp)
-            .clickable { },
+            .clickable { onLogoutClick() },
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {

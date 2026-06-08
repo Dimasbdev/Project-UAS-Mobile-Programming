@@ -65,6 +65,7 @@ import id.ac.umkt.kel_10_mk.projectuas.ui.theme.ParkirSurface
 import id.ac.umkt.kel_10_mk.projectuas.ui.theme.ParkirTextPrimary
 import id.ac.umkt.kel_10_mk.projectuas.ui.theme.ParkirTextSecondary
 import id.ac.umkt.kel_10_mk.projectuas.ui.theme.SpaceGroteskFamily
+import id.ac.umkt.kel_10_mk.projectuas.models.User
 
 private data class ProfileMenuItem(
     val label: String,
@@ -74,7 +75,11 @@ private data class ProfileMenuItem(
 )
 
 @Composable
-fun ProfileMahasiswaScreen(navController: NavHostController) {
+fun ProfileMahasiswaScreen(
+    navController: NavHostController,
+    onLogoutClick: () -> Unit = {},
+    currentUser: User? = null,
+) {
     val view = LocalView.current
     val context = LocalContext.current
 
@@ -139,10 +144,17 @@ fun ProfileMahasiswaScreen(navController: NavHostController) {
                 fontWeight = FontWeight.Bold,
                 fontSize = 26.sp,
             )
+            val initials = currentUser?.name?.split(" ")
+                ?.filter { it.isNotBlank() }
+                ?.mapNotNull { it.firstOrNull() }
+                ?.joinToString("")
+                ?.take(2)
+                ?.uppercase() ?: "MH"
+
             ProfileHeader(
-                initials = "JD",
-                name = "John Doe",
-                email = "241110244xxxx@umkt.ac.id",
+                initials = if (initials.isEmpty()) "MH" else initials,
+                name = currentUser?.name ?: "Mahasiswa",
+                email = currentUser?.email ?: "mahasiswa@umkt.ac.id",
             )
             MenuCard(items = menuItems)
             LogoutCard(onLogoutClick = { showLogoutDialog = true })
@@ -171,7 +183,10 @@ fun ProfileMahasiswaScreen(navController: NavHostController) {
                 )
             },
             confirmButton = {
-                TextButton(onClick = { showLogoutDialog = false }) {
+                TextButton(onClick = {
+                    showLogoutDialog = false
+                    onLogoutClick()
+                }) {
                     Text(
                         text = "Logout",
                         color = ParkirDanger,

@@ -66,25 +66,29 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.view.WindowCompat
+import id.ac.umkt.kel_10_mk.projectuas.ui.theme.ParkirBackground
+import id.ac.umkt.kel_10_mk.projectuas.ui.theme.ParkirSurface
+import id.ac.umkt.kel_10_mk.projectuas.ui.theme.ParkirAccent
+import id.ac.umkt.kel_10_mk.projectuas.ui.theme.ParkirDanger
+import id.ac.umkt.kel_10_mk.projectuas.ui.theme.ParkirTextPrimary
+import id.ac.umkt.kel_10_mk.projectuas.ui.theme.ParkirTextSecondary
+import id.ac.umkt.kel_10_mk.projectuas.ui.theme.ParkirInputBorder
+import id.ac.umkt.kel_10_mk.projectuas.ui.theme.ParkirPlaceholder
+import id.ac.umkt.kel_10_mk.projectuas.ui.theme.SpaceGroteskFamily
 import kotlinx.coroutines.delay
 
-private val BackgroundColor = Color(0xFF0A0E1A)
-private val AccentColor = Color(0xFF00D4AA)
-private val PrimaryTextColor = Color(0xFFF9FAFB)
-private val SecondaryTextColor = Color(0xFF9CA3AF)
-private val ErrorColor = Color(0xFFEF4444)
-private val CardColor = Color(0xFF1A1F2E)
-private val FieldBorderColor = Color(0xFF2D3748)
-private val PlaceholderColor = Color(0xFF4B5563)
-private val SpaceGrotesk = FontFamily(
-    Font(R.font.space_grotesk_regular, FontWeight.Normal),
-    Font(R.font.space_grotesk_medium, FontWeight.Medium),
-    Font(R.font.spacegrotesk_semibold, FontWeight.SemiBold),
-    Font(R.font.space_grotesk_bold, FontWeight.Bold),
-)
+private val BackgroundColor = ParkirBackground
+private val AccentColor = ParkirAccent
+private val PrimaryTextColor = ParkirTextPrimary
+private val SecondaryTextColor = ParkirTextSecondary
+private val ErrorColor = ParkirDanger
+private val CardColor = ParkirSurface
+private val FieldBorderColor = ParkirInputBorder
+private val PlaceholderColor = ParkirPlaceholder
+private val SpaceGrotesk = SpaceGroteskFamily
 
 private fun isValidCampusEmail(value: String): Boolean =
-    value.isNotBlank() && value.contains(".ac.id")
+    value.isNotBlank() && value.trim().endsWith(".ac.id")
 
 private fun isValidPassword(value: String): Boolean =
     value.isNotBlank() && value.length >= 8
@@ -94,6 +98,7 @@ fun RegisterScreen(
     onBackClick: () -> Unit,
     onRegisterClick: (name: String, email: String, password: String) -> Unit,
     onLoginClick: () -> Unit,
+    isLoading: Boolean = false,
 ) {
     val view = LocalView.current
     val context = LocalContext.current
@@ -111,7 +116,6 @@ fun RegisterScreen(
     var confirmPassword by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
     var confirmPasswordVisible by remember { mutableStateOf(false) }
-    var isLoading by remember { mutableStateOf(false) }
     var nameError by remember { mutableStateOf<String?>(null) }
     var emailError by remember { mutableStateOf<String?>(null) }
     var passwordError by remember { mutableStateOf<String?>(null) }
@@ -128,7 +132,7 @@ fun RegisterScreen(
         }
         emailError = when {
             trimmedEmail.isBlank() -> "Email kampus wajib diisi"
-            !trimmedEmail.contains(".ac.id") -> "Gunakan email kampus (.ac.id)"
+            !trimmedEmail.endsWith(".ac.id") -> "Gunakan email kampus (.ac.id)"
             else -> null
         }
         passwordError = when {
@@ -143,15 +147,7 @@ fun RegisterScreen(
         }
 
         if (nameError == null && emailError == null && passwordError == null && confirmPasswordError == null) {
-            isLoading = true
             onRegisterClick(trimmedName, trimmedEmail, password)
-        }
-    }
-
-    LaunchedEffect(isLoading) {
-        if (isLoading) {
-            delay(800)
-            isLoading = false
         }
     }
 

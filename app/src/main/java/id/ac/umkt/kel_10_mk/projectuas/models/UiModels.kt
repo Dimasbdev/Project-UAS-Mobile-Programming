@@ -2,11 +2,17 @@ package id.ac.umkt.kel_10_mk.projectuas.models
 
 import id.ac.umkt.kel_10_mk.projectuas.ParkingStatus
 
+import com.google.firebase.Timestamp
+
 data class ParkingArea(
-    val name: String,
-    val location: String,
-    val status: ParkingStatus,
+    val name: String = "",
+    val location: String = "",
+    val status: ParkingStatus = ParkingStatus.SEPI,
     val updatedMinutes: Int? = null,
+    val id: String = "",
+    val updatedAt: Timestamp? = null,
+    val updatedBy: String = "",
+    val notes: String = ""
 )
 
 data class ParkingMarker(

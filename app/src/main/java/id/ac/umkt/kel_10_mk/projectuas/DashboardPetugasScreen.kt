@@ -57,8 +57,27 @@ import id.ac.umkt.kel_10_mk.projectuas.ui.theme.ParkirTextSecondary
 import id.ac.umkt.kel_10_mk.projectuas.ui.theme.ParkirWarning
 import id.ac.umkt.kel_10_mk.projectuas.ui.theme.SpaceGroteskFamily
 
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+import java.util.TimeZone
+
+fun formatCurrentWitaTime(): String {
+    return try {
+        val sdf = SimpleDateFormat("HH:mm 'WITA' - EEEE, dd MMMM yyyy", Locale("id", "ID"))
+        sdf.timeZone = TimeZone.getTimeZone("GMT+8")
+        sdf.format(Date())
+    } catch (e: Exception) {
+        "08:00 WITA"
+    }
+}
+
 @Composable
-fun DashboardPetugasScreen(navController: NavHostController) {
+fun DashboardPetugasScreen(
+    navController: NavHostController,
+    parkingViewModel: ParkingViewModel,
+    officerName: String
+) {
     val view = androidx.compose.ui.platform.LocalView.current
     val context = androidx.compose.ui.platform.LocalContext.current
 
@@ -69,15 +88,7 @@ fun DashboardPetugasScreen(navController: NavHostController) {
         }
     }
 
-    val areas = remember {
-        listOf(
-            ParkingArea("Parkiran A", "Gedung A", ParkingStatus.SEDANG, 4),
-            ParkingArea("Parkiran B", "Gedung B", ParkingStatus.PENUH, 1),
-            ParkingArea("Parkiran C", "Gedung C", ParkingStatus.SEPI, 9),
-            ParkingArea("Parkiran D", "Gedung D", ParkingStatus.SEDANG, 6),
-        )
-    }
-
+    val areas = parkingViewModel.parkingAreas
     val summary = remember(areas) {
         areas.groupBy { it.status }.mapValues { it.value.size }
     }
@@ -107,7 +118,7 @@ fun DashboardPetugasScreen(navController: NavHostController) {
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             item { ParkirTopBar(showAction = false) }
-            item { PetugasHeader() }
+            item { PetugasHeader(officerName) }
             item { RoleChip() }
             item {
                 StatusSummaryCard(
@@ -134,20 +145,20 @@ fun DashboardPetugasScreen(navController: NavHostController) {
 }
 
 @Composable
-private fun PetugasHeader() {
+private fun PetugasHeader(officerName: String) {
     Column(
         modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
         Text(
-            text = "Selamat pagi, Petugas",
+            text = "Selamat pagi, $officerName",
             color = ParkirTextPrimary,
             fontFamily = SpaceGroteskFamily,
             fontWeight = FontWeight.SemiBold,
             fontSize = 24.sp,
         )
         Text(
-            text = "08:24 WITA - Rabu, 23 April 2026",
+            text = formatCurrentWitaTime(),
             color = ParkirTextSecondary,
             fontSize = 12.sp,
             letterSpacing = 1.1.sp,
@@ -287,7 +298,7 @@ private fun PetugasAreaCard(area: ParkingArea, navController: NavHostController)
         )
 
         OutlinedButton(
-            onClick = { navController.navigate(RouteUpdateKondisiPetugas) },
+            onClick = { navController.navigate("update-kondisi-petugas/${area.id}") },
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(12.dp),
             border = BorderStroke(1.dp, ParkirDivider),

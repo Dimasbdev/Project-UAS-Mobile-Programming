@@ -57,20 +57,7 @@ import id.ac.umkt.kel_10_mk.projectuas.ui.theme.ParkirTextSecondary
 import id.ac.umkt.kel_10_mk.projectuas.ui.theme.ParkirWarning
 import id.ac.umkt.kel_10_mk.projectuas.ui.theme.SpaceGroteskFamily
 
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
-import java.util.TimeZone
 
-fun formatCurrentWitaTime(): String {
-    return try {
-        val sdf = SimpleDateFormat("HH:mm 'WITA' - EEEE, dd MMMM yyyy", Locale("id", "ID"))
-        sdf.timeZone = TimeZone.getTimeZone("GMT+8")
-        sdf.format(Date())
-    } catch (e: Exception) {
-        "08:00 WITA"
-    }
-}
 
 @Composable
 fun DashboardPetugasScreen(

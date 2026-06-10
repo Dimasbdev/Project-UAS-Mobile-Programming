@@ -155,6 +155,7 @@ private fun GreetingSection(studentName: String) {
         )
     }
 }
+@Composable
 private fun StatusSummaryCard(
     sepiCount: Int,
     sedangCount: Int,

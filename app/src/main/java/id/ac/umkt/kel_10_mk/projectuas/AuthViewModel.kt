@@ -6,8 +6,10 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import id.ac.umkt.kel_10_mk.projectuas.models.User
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 
 sealed interface AuthUiState {
@@ -30,8 +32,8 @@ class AuthViewModel(
     val currentUser: User?
         get() = (uiState as? AuthUiState.Success)?.user
 
-    private val _navigationEvent = MutableSharedFlow<String>()
-    val navigationEvent = _navigationEvent.asSharedFlow()
+    private val _navigationEvent = Channel<String>(Channel.BUFFERED)
+    val navigationEvent = _navigationEvent.receiveAsFlow()
 
     private val _toastMessage = MutableSharedFlow<String>()
     val toastMessage = _toastMessage.asSharedFlow()
@@ -47,9 +49,9 @@ class AuthViewModel(
                 if (profile != null) {
                     uiState = AuthUiState.Success(profile)
                     if (profile.role == "petugas") {
-                        _navigationEvent.emit(RouteDashboardPetugas)
+                        _navigationEvent.send(RouteDashboardPetugas)
                     } else {
-                        _navigationEvent.emit(RouteDashboardMahasiswa)
+                        _navigationEvent.send(RouteDashboardMahasiswa)
                     }
                 }
             } catch (e: Exception) {
@@ -67,9 +69,9 @@ class AuthViewModel(
                 .onSuccess { user ->
                     uiState = AuthUiState.Success(user)
                     if (user.role == "petugas") {
-                        _navigationEvent.emit(RouteDashboardPetugas)
+                        _navigationEvent.send(RouteDashboardPetugas)
                     } else {
-                        _navigationEvent.emit(RouteDashboardMahasiswa)
+                        _navigationEvent.send(RouteDashboardMahasiswa)
                     }
                 }
                 .onFailure { error ->
@@ -85,7 +87,7 @@ class AuthViewModel(
                 .onSuccess {
                     uiState = AuthUiState.Idle
                     _toastMessage.emit("Registrasi berhasil! Silakan masuk.")
-                    _navigationEvent.emit(RouteLogin)
+                    _navigationEvent.send(RouteLogin)
                 }
                 .onFailure { error ->
                     uiState = AuthUiState.Error(mapErrorToIndonesian(error))
@@ -100,7 +102,7 @@ class AuthViewModel(
                 .onSuccess {
                     uiState = AuthUiState.Idle
                     _toastMessage.emit("Link reset password telah dikirim ke email Anda.")
-                    _navigationEvent.emit(RouteLogin)
+                    _navigationEvent.send(RouteLogin)
                 }
                 .onFailure { error ->
                     uiState = AuthUiState.Error(mapErrorToIndonesian(error))
@@ -112,7 +114,7 @@ class AuthViewModel(
         repository.logout()
         uiState = AuthUiState.Idle
         viewModelScope.launch {
-            _navigationEvent.emit(RouteLogin)
+            _navigationEvent.send(RouteLogin)
         }
     }
 

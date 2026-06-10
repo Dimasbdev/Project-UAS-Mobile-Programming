@@ -65,7 +65,7 @@ import id.ac.umkt.kel_10_mk.projectuas.ui.theme.ParkirWarning
 import id.ac.umkt.kel_10_mk.projectuas.ui.theme.SpaceGroteskFamily
 
 @Composable
-fun HistoryPetugasScreen(navController: NavHostController) {
+fun HistoryPetugasScreen(navController: NavHostController, viewModel: ParkingViewModel) {
     val view = LocalView.current
     val context = LocalContext.current
 
@@ -77,15 +77,7 @@ fun HistoryPetugasScreen(navController: NavHostController) {
     }
 
     var selectedFilter by remember { mutableStateOf(0) }
-    val logs = remember {
-        listOf(
-            ActivityLog("Parkiran B", ParkingStatus.SEDANG, "08:24 WITA", "3 mnt lalu"),
-            ActivityLog("Parkiran C", ParkingStatus.PENUH, "08:15 WITA", "12 mnt lalu"),
-            ActivityLog("Parkiran A", ParkingStatus.SEPI, "08:10 WITA", "17 mnt lalu"),
-            ActivityLog("Parkiran D", ParkingStatus.SEPI, "08:05 WITA", "22 mnt lalu"),
-            ActivityLog("Parkiran B", ParkingStatus.SEDANG, "07:58 WITA", "29 mnt lalu"),
-        )
-    }
+    val logs = viewModel.activityLogs
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -122,7 +114,7 @@ fun HistoryPetugasScreen(navController: NavHostController) {
                 )
             }
 
-            item { AnalyticsCard() }
+            item { AnalyticsCard(logs = logs) }
 
             item {
                 Text(
@@ -216,16 +208,21 @@ private fun FilterTab(
 }
 
 @Composable
-private fun AnalyticsCard() {
-    val chartData = listOf(
-        ChartDataPoint("07", ParkingStatus.SEPI),
-        ChartDataPoint("08", ParkingStatus.SEDANG),
-        ChartDataPoint("09", ParkingStatus.PENUH),
-        ChartDataPoint("10", ParkingStatus.PENUH),
-        ChartDataPoint("11", ParkingStatus.SEDANG),
-        ChartDataPoint("12", ParkingStatus.SEPI),
-        ChartDataPoint("13", ParkingStatus.SEPI)
-    )
+private fun AnalyticsCard(logs: List<ActivityLog>) {
+    val chartData = remember(logs) {
+        if (logs.isEmpty()) {
+            listOf(
+                ChartDataPoint("07", ParkingStatus.SEPI),
+                ChartDataPoint("08", ParkingStatus.SEDANG),
+                ChartDataPoint("09", ParkingStatus.PENUH)
+            )
+        } else {
+            logs.take(7).reversed().map { log ->
+                val hour = log.timeLabel.substringBefore(":")
+                ChartDataPoint(hour, log.status)
+            }
+        }
+    }
 
     Column(
         modifier = Modifier

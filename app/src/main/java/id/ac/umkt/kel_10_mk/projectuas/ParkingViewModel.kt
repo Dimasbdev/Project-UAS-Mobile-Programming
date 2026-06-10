@@ -27,8 +27,25 @@ class ParkingViewModel(
     private val _uiEvent = MutableSharedFlow<String>()
     val uiEvent = _uiEvent.asSharedFlow()
 
+    var activityLogs by mutableStateOf<List<id.ac.umkt.kel_10_mk.projectuas.models.ActivityLog>>(emptyList())
+        private set
+
     init {
         observeParkingAreas()
+        observeActivityLogs()
+    }
+
+    private fun observeActivityLogs() {
+        viewModelScope.launch {
+            repository.getActivityLogs()
+                .catch {
+                    // Fallback
+                    activityLogs = emptyList()
+                }
+                .collect { logs ->
+                    activityLogs = logs
+                }
+        }
     }
 
     private fun observeParkingAreas() {

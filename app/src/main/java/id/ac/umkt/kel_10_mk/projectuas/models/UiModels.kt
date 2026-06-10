@@ -22,9 +22,12 @@ data class ParkingMarker(
 )
 
 data class ActivityLog(
-    val area: String,
-    val status: ParkingStatus,
-    val timeLabel: String,
-    val agoLabel: String,
+    val id: String = "",
+    val areaId: String = "",
+    val area: String = "",
+    val status: ParkingStatus = ParkingStatus.SEPI,
+    val timeLabel: String = "",
+    val agoLabel: String = "",
+    val timestamp: Timestamp? = null,
     val officer: String? = null,
 )

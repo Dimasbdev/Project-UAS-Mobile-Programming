@@ -140,7 +140,7 @@ fun AppNavigation(
                 MapPetugasScreen(navController)
             }
             composable(RouteHistoryPetugas) {
-                HistoryPetugasScreen(navController)
+                HistoryPetugasScreen(navController, parkingViewModel)
             }
             composable(RouteProfilePetugas) {
                 ProfilePetugasScreen(
@@ -164,7 +164,7 @@ fun AppNavigation(
                 MapMahasiswaScreen(navController)
             }
             composable(RouteHistoryMahasiswa) {
-                HistoryMahasiswaScreen(navController)
+                HistoryMahasiswaScreen(navController, parkingViewModel)
             }
             composable(RouteProfileMahasiswa) {
                 ProfileMahasiswaScreen(

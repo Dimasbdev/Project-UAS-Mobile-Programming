@@ -2,7 +2,9 @@ package id.ac.umkt.kel_10_mk.projectuas
 
 import com.google.firebase.Timestamp
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.Query
 import id.ac.umkt.kel_10_mk.projectuas.models.ParkingArea
+import id.ac.umkt.kel_10_mk.projectuas.models.ActivityLog
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -109,6 +111,23 @@ class ParkingRepository {
                 "updatedBy" to officerName
             )
             firestore.collection("parkir_areas").document(id).update(updates).await()
+
+            val name = when (id) {
+                "parkiran_a" -> "Parkiran A"
+                "parkiran_b" -> "Parkiran B"
+                "parkiran_c" -> "Parkiran C"
+                "parkiran_d" -> "Parkiran D"
+                else -> id.replaceFirstChar { it.uppercase() }
+            }
+            val logData = mapOf(
+                "areaId" to id,
+                "areaName" to name,
+                "status" to status.name,
+                "timestamp" to Timestamp.now(),
+                "officerName" to officerName
+            )
+            firestore.collection("parkir_logs").add(logData).await()
+
             Result.success(Unit)
         } catch (e: Exception) {
             // Jika dokumen belum ada di Firestore, buat dokumen baru (inisialisasi otomatis)
@@ -136,10 +155,71 @@ class ParkingRepository {
                     "updatedBy" to officerName
                 )
                 firestore.collection("parkir_areas").document(id).set(newData).await()
+
+                val logData = mapOf(
+                    "areaId" to id,
+                    "areaName" to name,
+                    "status" to status.name,
+                    "timestamp" to Timestamp.now(),
+                    "officerName" to officerName
+                )
+                firestore.collection("parkir_logs").add(logData).await()
+
                 Result.success(Unit)
             } catch (ex: Exception) {
                 Result.failure(ex)
             }
         }
+    }
+
+    // Ambil log aktivitas parkir
+    fun getActivityLogs(): Flow<List<ActivityLog>> = callbackFlow {
+        val listener = firestore.collection("parkir_logs")
+            .orderBy("timestamp", Query.Direction.DESCENDING)
+            .limit(50)
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    close(error)
+                    return@addSnapshotListener
+                }
+                val logs = snapshot?.documents?.mapNotNull { doc ->
+                    val areaId = doc.getString("areaId") ?: ""
+                    val areaName = doc.getString("areaName") ?: ""
+                    val statusStr = doc.getString("status") ?: "SEPI"
+                    val status = try { ParkingStatus.valueOf(statusStr) } catch(e: Exception) { ParkingStatus.SEPI }
+                    val timestamp = doc.getTimestamp("timestamp")
+                    val officerName = doc.getString("officerName") ?: ""
+                    
+                    val formatter = java.text.SimpleDateFormat("HH:mm 'WITA'", java.util.Locale.getDefault()).apply {
+                        timeZone = java.util.TimeZone.getTimeZone("Asia/Makassar")
+                    }
+                    val timeLabel = timestamp?.toDate()?.let { formatter.format(it) } ?: ""
+                    
+                    val minutesAgo = timestamp?.let {
+                        val diffMs = System.currentTimeMillis() - it.toDate().time
+                        (diffMs / (1000 * 60)).toInt().coerceAtLeast(0)
+                    } ?: 0
+                    
+                    val agoLabel = when {
+                        minutesAgo < 60 -> "$minutesAgo mnt lalu"
+                        minutesAgo < 1440 -> "${minutesAgo / 60} j lalu"
+                        else -> "${minutesAgo / 1440} hr lalu"
+                    }
+
+                    ActivityLog(
+                        id = doc.id,
+                        areaId = areaId,
+                        area = areaName,
+                        status = status,
+                        timeLabel = timeLabel,
+                        agoLabel = agoLabel,
+                        timestamp = timestamp,
+                        officer = officerName
+                    )
+                } ?: emptyList()
+                
+                trySend(logs)
+            }
+        awaitClose { listener.remove() }
     }
 }

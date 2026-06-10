@@ -50,6 +50,8 @@ import id.ac.umkt.kel_10_mk.projectuas.models.ActivityLog
 import id.ac.umkt.kel_10_mk.projectuas.ui.components.BottomNavItemData
 import id.ac.umkt.kel_10_mk.projectuas.ui.components.ParkirBottomNavBar
 import id.ac.umkt.kel_10_mk.projectuas.ui.components.ParkirTopBar
+import id.ac.umkt.kel_10_mk.projectuas.ui.components.ParkirBarChart
+import id.ac.umkt.kel_10_mk.projectuas.ui.components.ChartDataPoint
 import id.ac.umkt.kel_10_mk.projectuas.ui.components.statusLabel
 import id.ac.umkt.kel_10_mk.projectuas.ui.theme.ParkirAccent
 import id.ac.umkt.kel_10_mk.projectuas.ui.theme.ParkirBackground
@@ -215,6 +217,16 @@ private fun FilterTab(
 
 @Composable
 private fun AnalyticsCard() {
+    val chartData = listOf(
+        ChartDataPoint("07", ParkingStatus.SEPI),
+        ChartDataPoint("08", ParkingStatus.SEDANG),
+        ChartDataPoint("09", ParkingStatus.PENUH),
+        ChartDataPoint("10", ParkingStatus.PENUH),
+        ChartDataPoint("11", ParkingStatus.SEDANG),
+        ChartDataPoint("12", ParkingStatus.SEPI),
+        ChartDataPoint("13", ParkingStatus.SEPI)
+    )
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -251,33 +263,7 @@ private fun AnalyticsCard() {
                 .border(BorderStroke(1.dp, ParkirDivider), RoundedCornerShape(16.dp))
                 .padding(16.dp),
         ) {
-            Column(
-                modifier = Modifier.fillMaxSize(),
-                verticalArrangement = Arrangement.SpaceBetween,
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                ) {
-                    Text(text = "100%", color = ParkirTextSecondary, fontSize = 11.sp)
-                    Text(text = "", color = ParkirTextSecondary, fontSize = 11.sp)
-                }
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                ) {
-                    Text(text = "50%", color = ParkirTextSecondary, fontSize = 11.sp)
-                    Text(text = "", color = ParkirTextSecondary, fontSize = 11.sp)
-                }
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                ) {
-                    listOf("07.00", "08.00", "09.00", "10.00", "11.00", "12.00", "13.00").forEach { label ->
-                        Text(text = label, color = ParkirTextSecondary, fontSize = 11.sp)
-                    }
-                }
-            }
+            ParkirBarChart(data = chartData)
         }
     }
 }

@@ -55,6 +55,8 @@ import id.ac.umkt.kel_10_mk.projectuas.models.ActivityLog
 import id.ac.umkt.kel_10_mk.projectuas.ui.components.BottomNavItemData
 import id.ac.umkt.kel_10_mk.projectuas.ui.components.ParkirBottomNavBar
 import id.ac.umkt.kel_10_mk.projectuas.ui.components.ParkirTopBar
+import id.ac.umkt.kel_10_mk.projectuas.ui.components.ParkirBarChart
+import id.ac.umkt.kel_10_mk.projectuas.ui.components.ChartDataPoint
 import id.ac.umkt.kel_10_mk.projectuas.ui.components.statusLabel
 import id.ac.umkt.kel_10_mk.projectuas.ui.theme.ParkirAccent
 import id.ac.umkt.kel_10_mk.projectuas.ui.theme.ParkirBackground
@@ -232,6 +234,16 @@ private fun FilterTab(
 
 @Composable
 private fun AnalyticsCard() {
+    val chartData = listOf(
+        ChartDataPoint("07", ParkingStatus.SEPI),
+        ChartDataPoint("08", ParkingStatus.SEDANG),
+        ChartDataPoint("09", ParkingStatus.PENUH),
+        ChartDataPoint("10", ParkingStatus.PENUH),
+        ChartDataPoint("11", ParkingStatus.SEDANG),
+        ChartDataPoint("12", ParkingStatus.SEPI),
+        ChartDataPoint("13", ParkingStatus.SEPI)
+    )
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -259,40 +271,15 @@ private fun AnalyticsCard() {
             )
         }
 
-        ChartPlaceholder()
-    }
-}
-
-@Composable
-private fun ChartPlaceholder() {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(160.dp)
-            .clip(RoundedCornerShape(14.dp))
-            .background(id.ac.umkt.kel_10_mk.projectuas.ui.theme.ParkirMapSurface)
-            .padding(horizontal = 16.dp, vertical = 12.dp),
-        verticalArrangement = Arrangement.SpaceBetween,
-    ) {
-        repeat(3) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(1.dp)
-                    .background(ParkirDivider.copy(alpha = 0.7f)),
-            )
-        }
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(160.dp)
+                .clip(RoundedCornerShape(14.dp))
+                .background(id.ac.umkt.kel_10_mk.projectuas.ui.theme.ParkirMapSurface)
+                .padding(horizontal = 16.dp, vertical = 12.dp)
         ) {
-            listOf("07", "08", "09", "10", "11", "12", "13").forEach { label ->
-                Text(
-                    text = label,
-                    color = ParkirTextSecondary,
-                    fontSize = 11.sp,
-                )
-            }
+            ParkirBarChart(data = chartData)
         }
     }
 }

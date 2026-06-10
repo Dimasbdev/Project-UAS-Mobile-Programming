@@ -36,15 +36,7 @@ fun AppNavigation(
 ) {
     val context = LocalContext.current
 
-    LaunchedEffect(Unit) {
-        authViewModel.navigationEvent.collect { route ->
-            navController.navigate(route) {
-                if (route == RouteDashboardMahasiswa || route == RouteDashboardPetugas) {
-                    popUpTo(RouteLogin) { inclusive = true }
-                }
-            }
-        }
-    }
+
 
     LaunchedEffect(Unit) {
         authViewModel.toastMessage.collect { message ->
@@ -89,6 +81,16 @@ fun AppNavigation(
             }
         }
     } else {
+        LaunchedEffect(Unit) {
+            authViewModel.navigationEvent.collect { route ->
+                navController.navigate(route) {
+                    if (route == RouteDashboardMahasiswa || route == RouteDashboardPetugas) {
+                        popUpTo(RouteLogin) { inclusive = true }
+                    }
+                }
+            }
+        }
+
         NavHost(
             navController = navController,
             startDestination = RouteLogin,

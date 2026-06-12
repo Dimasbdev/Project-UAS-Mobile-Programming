@@ -1,6 +1,8 @@
 package id.ac.umkt.kel_10_mk.projectuas
 
+import android.Manifest
 import android.app.Activity
+import android.content.pm.PackageManager
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -15,10 +17,10 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.History
@@ -32,18 +34,29 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
 import androidx.core.view.WindowCompat
 import androidx.navigation.NavHostController
-import id.ac.umkt.kel_10_mk.projectuas.models.ParkingMarker
+import com.google.android.gms.maps.model.BitmapDescriptorFactory
+import com.google.android.gms.maps.model.CameraPosition
+import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.MapStyleOptions
+import com.google.maps.android.compose.GoogleMap
+import com.google.maps.android.compose.MapProperties
+import com.google.maps.android.compose.MapUiSettings
+import com.google.maps.android.compose.Marker
+import com.google.maps.android.compose.MarkerState
+import com.google.maps.android.compose.rememberCameraPositionState
+import id.ac.umkt.kel_10_mk.projectuas.models.ParkingArea
 import id.ac.umkt.kel_10_mk.projectuas.ui.components.BottomNavItemData
 import id.ac.umkt.kel_10_mk.projectuas.ui.components.ParkirBottomNavBar
 import id.ac.umkt.kel_10_mk.projectuas.ui.components.ParkirTopBar
 import id.ac.umkt.kel_10_mk.projectuas.ui.components.StatusBadge
+import id.ac.umkt.kel_10_mk.projectuas.ui.theme.MapStyle
 import id.ac.umkt.kel_10_mk.projectuas.ui.theme.ParkirAccent
 import id.ac.umkt.kel_10_mk.projectuas.ui.theme.ParkirBackground
 import id.ac.umkt.kel_10_mk.projectuas.ui.theme.ParkirDanger
@@ -56,7 +69,7 @@ import id.ac.umkt.kel_10_mk.projectuas.ui.theme.ParkirWarning
 import id.ac.umkt.kel_10_mk.projectuas.ui.theme.SpaceGroteskFamily
 
 @Composable
-fun MapMahasiswaScreen(navController: NavHostController) {
+fun MapMahasiswaScreen(navController: NavHostController, parkingViewModel: ParkingViewModel) {
     val view = androidx.compose.ui.platform.LocalView.current
     val context = androidx.compose.ui.platform.LocalContext.current
 
@@ -67,14 +80,7 @@ fun MapMahasiswaScreen(navController: NavHostController) {
         }
     }
 
-    val markers = remember {
-        listOf(
-            ParkingMarker("Parkiran A", "Gedung A", ParkingStatus.SEPI),
-            ParkingMarker("Parkiran B", "Gedung B", ParkingStatus.SEDANG),
-            ParkingMarker("Parkiran C", "Gedung C", ParkingStatus.PENUH),
-            ParkingMarker("Parkiran D", "Gedung D", ParkingStatus.SEPI),
-        )
-    }
+    val parkingAreas = parkingViewModel.parkingAreas
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -97,8 +103,7 @@ fun MapMahasiswaScreen(navController: NavHostController) {
                 .background(ParkirBackground)
                 .statusBarsPadding()
                 .padding(paddingValues)
-                .padding(horizontal = 20.dp)
-                .verticalScroll(rememberScrollState()),
+                .padding(horizontal = 20.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             ParkirTopBar()
@@ -117,68 +122,98 @@ fun MapMahasiswaScreen(navController: NavHostController) {
                 fontSize = 13.sp,
             )
 
-            MapPlaceholder()
+            GoogleMapContainer(parkingAreas = parkingAreas)
 
             LegendRow()
 
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                markers.forEach { marker ->
-                    MarkerRow(marker = marker)
+            LazyColumn(
+                modifier = Modifier.fillMaxWidth().weight(1f),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                items(parkingAreas) { area ->
+                    MarkerRow(area = area)
+                }
+                item {
+                    Spacer(modifier = Modifier.height(12.dp))
                 }
             }
-
-            Spacer(modifier = Modifier.height(12.dp))
         }
     }
 }
 
 @Composable
-private fun MapPlaceholder() {
-    Column(
+private fun GoogleMapContainer(parkingAreas: List<ParkingArea>) {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val hasPermission = remember {
+        ContextCompat.checkSelfPermission(
+            context,
+            Manifest.permission.ACCESS_FINE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED ||
+        ContextCompat.checkSelfPermission(
+            context,
+            Manifest.permission.ACCESS_COARSE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED
+    }
+
+    val umktCenter = LatLng(-0.4822, 117.1508)
+    val cameraPositionState = rememberCameraPositionState {
+        position = CameraPosition.fromLatLngZoom(umktCenter, 16.5f)
+    }
+
+    val mapProperties = remember(hasPermission) {
+        MapProperties(
+            mapStyleOptions = MapStyleOptions(MapStyle.json),
+            isMyLocationEnabled = hasPermission
+        )
+    }
+
+    val mapUiSettings = remember {
+        MapUiSettings(
+            zoomControlsEnabled = false,
+            mapToolbarEnabled = false,
+            myLocationButtonEnabled = hasPermission
+        )
+    }
+
+    Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(220.dp)
-            .background(ParkirSurface, RoundedCornerShape(16.dp))
+            .height(320.dp)
+            .clip(RoundedCornerShape(16.dp))
             .border(BorderStroke(1.dp, ParkirDivider), RoundedCornerShape(16.dp))
-            .padding(16.dp),
-        verticalArrangement = Arrangement.SpaceBetween,
+            .background(ParkirMapSurface)
     ) {
-        Text(
-            text = "Google Maps Placeholder",
-            color = ParkirTextSecondary,
-            fontSize = 12.sp,
-            fontWeight = FontWeight.Medium,
-        )
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .weight(1f)
-                .clip(RoundedCornerShape(14.dp))
-                .background(ParkirMapSurface),
-            contentAlignment = Alignment.Center,
+        GoogleMap(
+            modifier = Modifier.fillMaxSize(),
+            cameraPositionState = cameraPositionState,
+            properties = mapProperties,
+            uiSettings = mapUiSettings
         ) {
-            Text(
-                text = "Peta kampus akan tampil di sini",
-                color = ParkirTextSecondary,
-                fontSize = 13.sp,
-            )
+            parkingAreas.forEach { area ->
+                val position = getLatLngForArea(area.id)
+                val markerHue = when (area.status) {
+                    ParkingStatus.SEPI -> BitmapDescriptorFactory.HUE_CYAN
+                    ParkingStatus.SEDANG -> BitmapDescriptorFactory.HUE_ORANGE
+                    ParkingStatus.PENUH -> BitmapDescriptorFactory.HUE_RED
+                }
+                Marker(
+                    state = MarkerState(position = position),
+                    title = area.name,
+                    snippet = "${area.location} - Status: ${area.status.name}",
+                    icon = BitmapDescriptorFactory.defaultMarker(markerHue)
+                )
+            }
         }
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-        ) {
-            Text(
-                text = "4 area terpantau",
-                color = ParkirTextSecondary,
-                fontSize = 12.sp,
-            )
-            Text(
-                text = "Update real-time",
-                color = ParkirAccent,
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Medium,
-            )
-        }
+    }
+}
+
+private fun getLatLngForArea(areaId: String): LatLng {
+    return when (areaId) {
+        "parkiran_a" -> LatLng(-0.482065, 117.150493)
+        "parkiran_b" -> LatLng(-0.482500, 117.150850)
+        "parkiran_c" -> LatLng(-0.482900, 117.151150)
+        "parkiran_d" -> LatLng(-0.481800, 117.151300)
+        else -> LatLng(-0.4822, 117.1508)
     }
 }
 
@@ -200,7 +235,7 @@ private fun LegendRow() {
 }
 
 @Composable
-private fun LegendItem(label: String, color: Color) {
+private fun LegendItem(label: String, color: androidx.compose.ui.graphics.Color) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(6.dp),
@@ -221,8 +256,8 @@ private fun LegendItem(label: String, color: Color) {
 }
 
 @Composable
-private fun MarkerRow(marker: ParkingMarker) {
-    val statusColor = when (marker.status) {
+private fun MarkerRow(area: ParkingArea) {
+    val statusColor = when (area.status) {
         ParkingStatus.SEPI -> ParkirAccent
         ParkingStatus.SEDANG -> ParkirWarning
         ParkingStatus.PENUH -> ParkirDanger
@@ -239,17 +274,17 @@ private fun MarkerRow(marker: ParkingMarker) {
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Text(
-                text = marker.area,
+                text = area.name,
                 color = ParkirTextPrimary,
                 fontWeight = FontWeight.SemiBold,
                 fontSize = 14.sp,
             )
             Text(
-                text = marker.location,
+                text = area.location,
                 color = ParkirTextSecondary,
                 fontSize = 12.sp,
             )
         }
-        StatusBadge(status = marker.status, color = statusColor)
+        StatusBadge(status = area.status, color = statusColor)
     }
 }

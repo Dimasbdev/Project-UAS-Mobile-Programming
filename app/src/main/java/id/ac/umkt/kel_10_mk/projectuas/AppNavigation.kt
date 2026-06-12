@@ -137,7 +137,7 @@ fun AppNavigation(
                 DashboardPetugasScreen(navController, parkingViewModel, officerName)
             }
             composable(RouteMapPetugas) {
-                MapPetugasScreen(navController)
+                MapPetugasScreen(navController, parkingViewModel)
             }
             composable(RouteHistoryPetugas) {
                 HistoryPetugasScreen(navController, parkingViewModel)
@@ -161,7 +161,7 @@ fun AppNavigation(
                 UpdateKondisiScreen(navController, areaId, parkingViewModel, authViewModel)
             }
             composable(RouteMapMahasiswa) {
-                MapMahasiswaScreen(navController)
+                MapMahasiswaScreen(navController, parkingViewModel)
             }
             composable(RouteHistoryMahasiswa) {
                 HistoryMahasiswaScreen(navController, parkingViewModel)

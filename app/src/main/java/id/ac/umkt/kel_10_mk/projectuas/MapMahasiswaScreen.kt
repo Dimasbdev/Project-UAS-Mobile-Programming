@@ -17,10 +17,10 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.History
@@ -103,8 +103,7 @@ fun MapMahasiswaScreen(navController: NavHostController, parkingViewModel: Parki
                 .background(ParkirBackground)
                 .statusBarsPadding()
                 .padding(paddingValues)
-                .padding(horizontal = 20.dp)
-                .verticalScroll(rememberScrollState()),
+                .padding(horizontal = 20.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             ParkirTopBar()
@@ -127,13 +126,17 @@ fun MapMahasiswaScreen(navController: NavHostController, parkingViewModel: Parki
 
             LegendRow()
 
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                parkingAreas.forEach { area ->
+            LazyColumn(
+                modifier = Modifier.fillMaxWidth().weight(1f),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                items(parkingAreas) { area ->
                     MarkerRow(area = area)
                 }
+                item {
+                    Spacer(modifier = Modifier.height(12.dp))
+                }
             }
-
-            Spacer(modifier = Modifier.height(12.dp))
         }
     }
 }
@@ -175,7 +178,7 @@ private fun GoogleMapContainer(parkingAreas: List<ParkingArea>) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(220.dp)
+            .height(320.dp)
             .clip(RoundedCornerShape(16.dp))
             .border(BorderStroke(1.dp, ParkirDivider), RoundedCornerShape(16.dp))
             .background(ParkirMapSurface)

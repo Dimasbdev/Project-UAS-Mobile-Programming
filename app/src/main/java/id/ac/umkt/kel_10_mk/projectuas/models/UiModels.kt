@@ -9,6 +9,7 @@ data class ParkingArea(
     val location: String = "",
     val status: ParkingStatus = ParkingStatus.SEPI,
     val updatedMinutes: Int? = null,
+    val updatedAgoLabel: String = "",
     val id: String = "",
     val updatedAt: Timestamp? = null,
     val updatedBy: String = "",

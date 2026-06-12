@@ -40,11 +40,14 @@ class ParkingRepository {
                         (diffMs / (1000 * 60)).toInt().coerceAtLeast(0)
                     } ?: 0
 
+                    val agoLabel = formatRelativeTime(minutesAgo)
+
                     ParkingArea(
                         name = name,
                         location = location,
                         status = status,
                         updatedMinutes = minutesAgo,
+                        updatedAgoLabel = agoLabel,
                         id = doc.id,
                         updatedAt = updatedAt,
                         updatedBy = updatedBy,
@@ -81,11 +84,14 @@ class ParkingRepository {
                 (diffMs / (1000 * 60)).toInt().coerceAtLeast(0)
             } ?: 0
 
+            val agoLabel = formatRelativeTime(minutesAgo)
+
             ParkingArea(
                 name = name,
                 location = location,
                 status = status,
                 updatedMinutes = minutesAgo,
+                updatedAgoLabel = agoLabel,
                 id = doc.id,
                 updatedAt = updatedAt,
                 updatedBy = updatedBy,
@@ -200,11 +206,7 @@ class ParkingRepository {
                         (diffMs / (1000 * 60)).toInt().coerceAtLeast(0)
                     } ?: 0
                     
-                    val agoLabel = when {
-                        minutesAgo < 60 -> "$minutesAgo mnt lalu"
-                        minutesAgo < 1440 -> "${minutesAgo / 60} j lalu"
-                        else -> "${minutesAgo / 1440} hr lalu"
-                    }
+                    val agoLabel = formatRelativeTime(minutesAgo)
 
                     ActivityLog(
                         id = doc.id,
@@ -221,5 +223,15 @@ class ParkingRepository {
                 trySend(logs)
             }
         awaitClose { listener.remove() }
+    }
+
+    private fun formatRelativeTime(minutesAgo: Int): String {
+        return when {
+            minutesAgo < 1 -> "baru saja"
+            minutesAgo < 60 -> "$minutesAgo menit lalu"
+            minutesAgo < 1440 -> "${minutesAgo / 60} jam lalu"
+            minutesAgo < 43200 -> "${minutesAgo / 1440} hari lalu"
+            else -> "${minutesAgo / 43200} bulan lalu"
+        }
     }
 }

@@ -279,7 +279,7 @@ private fun PetugasAreaCard(area: ParkingArea, navController: NavHostController)
         ParkingStatusBar(status = area.status, color = statusColor)
 
         Text(
-            text = "Diperbarui ${area.updatedMinutes ?: 0} menit lalu",
+            text = "Diperbarui ${area.updatedAgoLabel.ifEmpty { "baru saja" }}",
             color = ParkirTextSecondary,
             fontSize = 12.sp,
         )

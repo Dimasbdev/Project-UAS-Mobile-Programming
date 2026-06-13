@@ -57,7 +57,7 @@ private data class NotificationItem(
 )
 
 @Composable
-fun NotificationsMahasiswaScreen(navController: NavHostController) {
+fun NotificationsMahasiswaScreen(navController: NavHostController, viewModel: ParkingViewModel) {
     val view = LocalView.current
     val context = LocalContext.current
 
@@ -68,26 +68,28 @@ fun NotificationsMahasiswaScreen(navController: NavHostController) {
         }
     }
 
-    val notifications = listOf(
-        NotificationItem(
-            title = "Parkiran A kini SEPI",
-            message = "Slot parkir masih tersedia. Kamu bisa menuju Gedung A.",
-            time = "08:40 WITA",
-            isUnread = true,
-        ),
-        NotificationItem(
-            title = "Parkiran C PENUH",
-            message = "Parkiran C penuh, coba alternatif Parkiran B.",
-            time = "08:12 WITA",
-            isUnread = true,
-        ),
-        NotificationItem(
-            title = "Update parkir terakhir",
-            message = "Petugas memperbarui status parkiran 20 menit lalu.",
-            time = "07:50 WITA",
-            isUnread = false,
-        ),
-    )
+    val logs = viewModel.activityLogs
+    val notifications = androidx.compose.runtime.remember(logs) {
+        logs.map { log ->
+            val message = when (log.status) {
+                ParkingStatus.PENUH -> "Parkiran penuh, coba cari alternatif parkiran lain."
+                ParkingStatus.SEDANG -> "Parkiran mulai ramai, segera amankan tempatmu."
+                ParkingStatus.SEPI -> "Slot parkir masih tersedia. Kamu bisa menuju ke sana."
+            }
+            
+            val minutesAgo = log.timestamp?.let {
+                val diffMs = System.currentTimeMillis() - it.toDate().time
+                (diffMs / (1000 * 60)).toInt()
+            } ?: 0
+
+            NotificationItem(
+                title = "${log.area} kini ${log.status.name}",
+                message = message,
+                time = log.timeLabel,
+                isUnread = minutesAgo < 60
+            )
+        }
+    }
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),

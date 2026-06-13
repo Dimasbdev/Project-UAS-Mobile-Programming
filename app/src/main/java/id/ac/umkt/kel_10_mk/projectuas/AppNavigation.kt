@@ -174,7 +174,7 @@ fun AppNavigation(
                 )
             }
             composable(RouteNotificationsMahasiswa) {
-                NotificationsMahasiswaScreen(navController)
+                NotificationsMahasiswaScreen(navController, parkingViewModel)
             }
             composable(RouteLocationPermissionMahasiswa) {
                 LocationPermissionMahasiswaScreen(navController)

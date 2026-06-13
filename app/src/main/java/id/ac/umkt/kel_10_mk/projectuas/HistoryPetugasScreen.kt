@@ -45,6 +45,7 @@ import id.ac.umkt.kel_10_mk.projectuas.ui.theme.ParkirAccent
 import androidx.compose.foundation.background
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.Alignment
+import androidx.compose.material.icons.filled.Share
 
 @Composable
 fun HistoryPetugasScreen(navController: NavHostController, viewModel: ParkingViewModel) {
@@ -66,6 +67,26 @@ fun HistoryPetugasScreen(navController: NavHostController, viewModel: ParkingVie
     }
     val chartData by remember {
         derivedStateOf { buildChartData(filteredLogs, isToday = selectedFilter == 0) }
+    }
+
+    val exportLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
+        androidx.activity.result.contract.ActivityResultContracts.CreateDocument("text/csv")
+    ) { uri ->
+        if (uri != null) {
+            try {
+                context.contentResolver.openOutputStream(uri)?.use { outputStream ->
+                    val writer = outputStream.bufferedWriter()
+                    writer.write("Waktu,Area,Status\n")
+                    filteredLogs.forEach { log ->
+                        writer.write("${log.timeLabel},${log.area},${log.status.name}\n")
+                    }
+                    writer.flush()
+                }
+                android.widget.Toast.makeText(context, "Berhasil export data", android.widget.Toast.LENGTH_SHORT).show()
+            } catch (e: Exception) {
+                android.widget.Toast.makeText(context, "Gagal export data", android.widget.Toast.LENGTH_SHORT).show()
+            }
+        }
     }
 
     Scaffold(
@@ -92,7 +113,15 @@ fun HistoryPetugasScreen(navController: NavHostController, viewModel: ParkingVie
                 .padding(horizontal = 20.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            item { ParkirTopBar(showAction = false) }
+            item { 
+                ParkirTopBar(
+                    showAction = true,
+                    actionIcon = Icons.Default.Share,
+                    onActionClick = {
+                        exportLauncher.launch("export_histori_parkir.csv")
+                    }
+                ) 
+            }
 
             item { HistoryTitleSection() }
 

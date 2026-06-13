@@ -29,6 +29,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -78,13 +79,14 @@ fun HistoryMahasiswaScreen(navController: NavHostController, viewModel: ParkingV
     }
 
     var selectedFilter by remember { mutableIntStateOf(0) }
-    val logs = viewModel.activityLogs
+    val logs by viewModel.activityLogs.collectAsState()
+    val logsLimit by viewModel.logsLimit.collectAsState()
 
     // derivedStateOf memastikan rekomputasi hanya terjadi ketika logs atau filter benar-benar berubah
-    val filteredLogs by remember {
+    val filteredLogs by remember(logs, selectedFilter) {
         derivedStateOf { filterLogs(logs, selectedFilter) }
     }
-    val chartData by remember {
+    val chartData by remember(filteredLogs, selectedFilter) {
         derivedStateOf { buildChartData(filteredLogs, isToday = selectedFilter == 0) }
     }
 
@@ -145,7 +147,7 @@ fun HistoryMahasiswaScreen(navController: NavHostController, viewModel: ParkingV
                 HistoryActivityLogCard(log = log)
             }
 
-            if (logs.size >= viewModel.logsLimit) {
+            if (logs.size >= logsLimit) {
                 item {
                     androidx.compose.runtime.LaunchedEffect(Unit) {
                         viewModel.loadMoreLogs()

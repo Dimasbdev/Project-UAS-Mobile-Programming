@@ -30,6 +30,8 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -80,7 +82,7 @@ fun MapMahasiswaScreen(navController: NavHostController, parkingViewModel: Parki
         }
     }
 
-    val parkingAreas = parkingViewModel.parkingAreas
+    val parkingAreas by parkingViewModel.parkingAreas.collectAsState()
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -167,7 +169,7 @@ private fun GoogleMapContainer(parkingAreas: List<ParkingArea>) {
         )
     }
 
-    val mapUiSettings = remember {
+    val mapUiSettings = remember(hasPermission) {
         MapUiSettings(
             zoomControlsEnabled = false,
             mapToolbarEnabled = false,
@@ -196,8 +198,9 @@ private fun GoogleMapContainer(parkingAreas: List<ParkingArea>) {
                     ParkingStatus.SEDANG -> BitmapDescriptorFactory.HUE_ORANGE
                     ParkingStatus.PENUH -> BitmapDescriptorFactory.HUE_RED
                 }
+                val markerState = remember(area.id) { MarkerState(position = position) }
                 Marker(
-                    state = MarkerState(position = position),
+                    state = markerState,
                     title = area.name,
                     snippet = "${area.location} - Status: ${area.status.name}",
                     icon = BitmapDescriptorFactory.defaultMarker(markerHue)

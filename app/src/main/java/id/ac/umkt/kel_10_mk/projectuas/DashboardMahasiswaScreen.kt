@@ -28,6 +28,8 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -84,7 +86,7 @@ fun DashboardMahasiswaScreen(
         }
     }
 
-    val areas = parkingViewModel.parkingAreas
+    val areas by parkingViewModel.parkingAreas.collectAsState()
     val summary = remember(areas) {
         areas.groupBy { it.status }.mapValues { it.value.size }
     }
@@ -147,8 +149,9 @@ private fun GreetingSection(studentName: String) {
             fontWeight = FontWeight.SemiBold,
             fontSize = 22.sp,
         )
+        val witaTime = remember { formatCurrentWitaTime() }
         Text(
-            text = formatCurrentWitaTime(),
+            text = witaTime,
             color = ParkirAccent,
             fontSize = 12.sp,
             letterSpacing = 1.1.sp,

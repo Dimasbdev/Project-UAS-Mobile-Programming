@@ -20,6 +20,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -60,12 +61,13 @@ fun HistoryPetugasScreen(navController: NavHostController, viewModel: ParkingVie
     }
 
     var selectedFilter by remember { mutableIntStateOf(0) }
-    val logs = viewModel.activityLogs
+    val logs by viewModel.activityLogs.collectAsState()
+    val logsLimit by viewModel.logsLimit.collectAsState()
 
-    val filteredLogs by remember {
+    val filteredLogs by remember(logs, selectedFilter) {
         derivedStateOf { filterLogs(logs, selectedFilter) }
     }
-    val chartData by remember {
+    val chartData by remember(filteredLogs, selectedFilter) {
         derivedStateOf { buildChartData(filteredLogs, isToday = selectedFilter == 0) }
     }
 
@@ -154,7 +156,7 @@ fun HistoryPetugasScreen(navController: NavHostController, viewModel: ParkingVie
                 HistoryActivityLogCard(log = log)
             }
 
-            if (logs.size >= viewModel.logsLimit) {
+            if (logs.size >= logsLimit) {
                 item {
                     androidx.compose.runtime.LaunchedEffect(Unit) {
                         viewModel.loadMoreLogs()

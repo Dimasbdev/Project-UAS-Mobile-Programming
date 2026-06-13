@@ -29,6 +29,8 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.toArgb
@@ -68,7 +70,7 @@ fun NotificationsMahasiswaScreen(navController: NavHostController, viewModel: Pa
         }
     }
 
-    val logs = viewModel.activityLogs
+    val logs by viewModel.activityLogs.collectAsState()
     val notifications = androidx.compose.runtime.remember(logs) {
         logs.mapNotNull { log ->
             val minutesAgo = log.timestamp?.let {

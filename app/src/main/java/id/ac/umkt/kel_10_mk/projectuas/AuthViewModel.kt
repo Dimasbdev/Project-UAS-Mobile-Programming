@@ -35,7 +35,7 @@ class AuthViewModel(
     private val _navigationEvent = Channel<String>(Channel.BUFFERED)
     val navigationEvent = _navigationEvent.receiveAsFlow()
 
-    private val _toastMessage = MutableSharedFlow<String>()
+    private val _toastMessage = MutableSharedFlow<String>(replay = 1)
     val toastMessage = _toastMessage.asSharedFlow()
 
     init {

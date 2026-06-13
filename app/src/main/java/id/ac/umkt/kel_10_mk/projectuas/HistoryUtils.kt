@@ -38,8 +38,8 @@ fun buildChartData(logs: List<ActivityLog>, isToday: Boolean): List<ChartDataPoi
     if (logs.isEmpty()) return emptyList()
 
     return if (isToday) {
+        val cal = Calendar.getInstance()
         val grouped = logs.groupBy { log ->
-            val cal = Calendar.getInstance()
             log.timestamp?.toDate()?.let { cal.time = it }
             cal.get(Calendar.HOUR_OF_DAY)
         }
@@ -53,8 +53,8 @@ fun buildChartData(logs: List<ActivityLog>, isToday: Boolean): List<ChartDataPoi
             }
     } else {
         val fmt = SimpleDateFormat("EEE", Locale("id", "ID"))
+        val cal = Calendar.getInstance()
         val grouped = logs.groupBy { log ->
-            val cal = Calendar.getInstance()
             log.timestamp?.toDate()?.let { cal.time = it }
             // Key = tahun * 1000 + hari_dalam_tahun agar tahun berbeda tidak bentrok
             cal.get(Calendar.YEAR) * 1000 + cal.get(Calendar.DAY_OF_YEAR)

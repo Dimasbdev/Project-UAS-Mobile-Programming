@@ -31,6 +31,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -79,7 +80,8 @@ fun UpdateKondisiScreen(
         parkingViewModel.loadParkingArea(areaId)
     }
 
-    val currentArea = parkingViewModel.currentArea
+    val currentArea by parkingViewModel.currentArea.collectAsState()
+    val isLoading by parkingViewModel.isLoading.collectAsState()
 
     var selectedStatus by remember { mutableStateOf(ParkingStatus.SEDANG) }
     var note by remember { mutableStateOf("") }
@@ -111,29 +113,31 @@ fun UpdateKondisiScreen(
         }
     }
 
-    val options = listOf(
-        StatusOption(
-            status = ParkingStatus.SEPI,
-            title = "Sepi",
-            description = "Masih banyak tempat tersedia",
-            color = ParkirAccent,
-            icon = Icons.Default.Check,
-        ),
-        StatusOption(
-            status = ParkingStatus.SEDANG,
-            title = "Sedang",
-            description = "Mulai ramai",
-            color = ParkirWarning,
-            icon = Icons.Default.Remove,
-        ),
-        StatusOption(
-            status = ParkingStatus.PENUH,
-            title = "Penuh",
-            description = "Tidak ada tempat tersisa",
-            color = ParkirDanger,
-            icon = Icons.Default.Close,
-        ),
-    )
+    val options = remember {
+        listOf(
+            StatusOption(
+                status = ParkingStatus.SEPI,
+                title = "Sepi",
+                description = "Masih banyak tempat tersedia",
+                color = ParkirAccent,
+                icon = Icons.Default.Check,
+            ),
+            StatusOption(
+                status = ParkingStatus.SEDANG,
+                title = "Sedang",
+                description = "Mulai ramai",
+                color = ParkirWarning,
+                icon = Icons.Default.Remove,
+            ),
+            StatusOption(
+                status = ParkingStatus.PENUH,
+                title = "Penuh",
+                description = "Tidak ada tempat tersisa",
+                color = ParkirDanger,
+                icon = Icons.Default.Close,
+            ),
+        )
+    }
 
     val textFieldColors = OutlinedTextFieldDefaults.colors(
         focusedContainerColor = ParkirBackground,
@@ -160,8 +164,9 @@ fun UpdateKondisiScreen(
         ) {
             TopBar(onBack = { navController.popBackStack() })
 
-            if (currentArea != null) {
-                AreaCard(area = currentArea, status = selectedStatus)
+            val area = currentArea
+            if (area != null) {
+                AreaCard(area = area, status = selectedStatus)
             } else {
                 Box(
                     modifier = Modifier
@@ -214,7 +219,7 @@ fun UpdateKondisiScreen(
                     val officerName = authViewModel.currentUser?.name ?: "Petugas"
                     parkingViewModel.updateParkingArea(areaId, selectedStatus, note, officerName)
                 },
-                isLoading = parkingViewModel.isLoading
+                isLoading = isLoading
             )
 
             Spacer(modifier = Modifier.height(12.dp))

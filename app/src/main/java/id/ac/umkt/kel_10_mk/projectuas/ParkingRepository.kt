@@ -9,9 +9,67 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
+import java.text.SimpleDateFormat
+import java.util.Locale
+import java.util.TimeZone
 
 class ParkingRepository {
     private val firestore: FirebaseFirestore = FirebaseFirestore.getInstance()
+
+    // Cache SimpleDateFormat — tidak perlu dibuat ulang tiap listener call
+    private val timeFormatter = SimpleDateFormat("HH:mm 'WITA'", Locale.getDefault()).apply {
+        timeZone = TimeZone.getTimeZone("Asia/Makassar")
+    }
+
+    // Helper: mapping ID → nama area
+    private fun areaName(id: String) = when (id) {
+        "parkiran_a" -> "Parkiran A"
+        "parkiran_b" -> "Parkiran B"
+        "parkiran_c" -> "Parkiran C"
+        "parkiran_d" -> "Parkiran D"
+        else -> id.replaceFirstChar { it.uppercase() }
+    }
+
+    // Helper: mapping ID → lokasi gedung
+    private fun areaLocation(id: String) = when (id) {
+        "parkiran_a" -> "Gedung A"
+        "parkiran_b" -> "Gedung B"
+        "parkiran_c" -> "Gedung C"
+        "parkiran_d" -> "Gedung D"
+        else -> "Gedung Utama"
+    }
+
+    // Helper: parse satu dokumen Firestore → ParkingArea
+    private fun documentToParkingArea(
+        docId: String,
+        name: String,
+        location: String,
+        statusStr: String,
+        updatedAt: Timestamp?,
+        updatedBy: String,
+        notes: String,
+    ): ParkingArea {
+        val status = try {
+            ParkingStatus.valueOf(statusStr)
+        } catch (e: Exception) {
+            ParkingStatus.SEPI
+        }
+        val minutesAgo = updatedAt?.let {
+            val diffMs = System.currentTimeMillis() - it.toDate().time
+            (diffMs / (1000 * 60)).toInt().coerceAtLeast(0)
+        } ?: 0
+        return ParkingArea(
+            name = name,
+            location = location,
+            status = status,
+            updatedMinutes = minutesAgo,
+            updatedAgoLabel = formatRelativeTime(minutesAgo),
+            id = docId,
+            updatedAt = updatedAt,
+            updatedBy = updatedBy,
+            notes = notes,
+        )
+    }
 
     // Ambil data area parkir secara real-time menggunakan Flow
     fun getParkingAreas(): Flow<List<ParkingArea>> = callbackFlow {
@@ -22,39 +80,17 @@ class ParkingRepository {
                     return@addSnapshotListener
                 }
                 val areas = snapshot?.documents?.mapNotNull { doc ->
-                    val name = doc.getString("name") ?: ""
-                    val location = doc.getString("location") ?: ""
-                    val statusStr = doc.getString("status") ?: "SEPI"
-                    val status = try {
-                        ParkingStatus.valueOf(statusStr)
-                    } catch (e: Exception) {
-                        ParkingStatus.SEPI
-                    }
-                    val updatedAt = doc.getTimestamp("updatedAt")
-                    val updatedBy = doc.getString("updatedBy") ?: ""
-                    val notes = doc.getString("notes") ?: ""
-                    
-                    // Hitung selisih menit secara dinamis
-                    val minutesAgo = updatedAt?.let {
-                        val diffMs = System.currentTimeMillis() - it.toDate().time
-                        (diffMs / (1000 * 60)).toInt().coerceAtLeast(0)
-                    } ?: 0
-
-                    val agoLabel = formatRelativeTime(minutesAgo)
-
-                    ParkingArea(
-                        name = name,
-                        location = location,
-                        status = status,
-                        updatedMinutes = minutesAgo,
-                        updatedAgoLabel = agoLabel,
-                        id = doc.id,
-                        updatedAt = updatedAt,
-                        updatedBy = updatedBy,
-                        notes = notes
+                    documentToParkingArea(
+                        docId = doc.id,
+                        name = doc.getString("name") ?: "",
+                        location = doc.getString("location") ?: "",
+                        statusStr = doc.getString("status") ?: "SEPI",
+                        updatedAt = doc.getTimestamp("updatedAt"),
+                        updatedBy = doc.getString("updatedBy") ?: "",
+                        notes = doc.getString("notes") ?: "",
                     )
                 } ?: emptyList()
-                
+
                 // Urutkan berdasarkan ID agar urutannya konsisten (a, b, c, d)
                 trySend(areas.sortedBy { it.id })
             }
@@ -66,36 +102,14 @@ class ParkingRepository {
         return try {
             val doc = firestore.collection("parkir_areas").document(id).get().await()
             if (!doc.exists()) return null
-            
-            val name = doc.getString("name") ?: ""
-            val location = doc.getString("location") ?: ""
-            val statusStr = doc.getString("status") ?: "SEPI"
-            val status = try {
-                ParkingStatus.valueOf(statusStr)
-            } catch (e: Exception) {
-                ParkingStatus.SEPI
-            }
-            val updatedAt = doc.getTimestamp("updatedAt")
-            val updatedBy = doc.getString("updatedBy") ?: ""
-            val notes = doc.getString("notes") ?: ""
-            
-            val minutesAgo = updatedAt?.let {
-                val diffMs = System.currentTimeMillis() - it.toDate().time
-                (diffMs / (1000 * 60)).toInt().coerceAtLeast(0)
-            } ?: 0
-
-            val agoLabel = formatRelativeTime(minutesAgo)
-
-            ParkingArea(
-                name = name,
-                location = location,
-                status = status,
-                updatedMinutes = minutesAgo,
-                updatedAgoLabel = agoLabel,
-                id = doc.id,
-                updatedAt = updatedAt,
-                updatedBy = updatedBy,
-                notes = notes
+            documentToParkingArea(
+                docId = doc.id,
+                name = doc.getString("name") ?: "",
+                location = doc.getString("location") ?: "",
+                statusStr = doc.getString("status") ?: "SEPI",
+                updatedAt = doc.getTimestamp("updatedAt"),
+                updatedBy = doc.getString("updatedBy") ?: "",
+                notes = doc.getString("notes") ?: "",
             )
         } catch (e: Exception) {
             null
@@ -107,30 +121,25 @@ class ParkingRepository {
         id: String,
         status: ParkingStatus,
         notes: String,
-        officerName: String
+        officerName: String,
     ): Result<Unit> {
+        val name = areaName(id)
         return try {
+            val now = Timestamp.now()
             val updates = mapOf(
                 "status" to status.name,
                 "notes" to notes,
-                "updatedAt" to Timestamp.now(),
-                "updatedBy" to officerName
+                "updatedAt" to now,
+                "updatedBy" to officerName,
             )
             firestore.collection("parkir_areas").document(id).update(updates).await()
 
-            val name = when (id) {
-                "parkiran_a" -> "Parkiran A"
-                "parkiran_b" -> "Parkiran B"
-                "parkiran_c" -> "Parkiran C"
-                "parkiran_d" -> "Parkiran D"
-                else -> id.replaceFirstChar { it.uppercase() }
-            }
             val logData = mapOf(
                 "areaId" to id,
                 "areaName" to name,
                 "status" to status.name,
-                "timestamp" to Timestamp.now(),
-                "officerName" to officerName
+                "timestamp" to now,
+                "officerName" to officerName,
             )
             firestore.collection("parkir_logs").add(logData).await()
 
@@ -138,27 +147,14 @@ class ParkingRepository {
         } catch (e: Exception) {
             // Jika dokumen belum ada di Firestore, buat dokumen baru (inisialisasi otomatis)
             try {
-                val name = when (id) {
-                    "parkiran_a" -> "Parkiran A"
-                    "parkiran_b" -> "Parkiran B"
-                    "parkiran_c" -> "Parkiran C"
-                    "parkiran_d" -> "Parkiran D"
-                    else -> id.replaceFirstChar { it.uppercase() }
-                }
-                val location = when (id) {
-                    "parkiran_a" -> "Gedung A"
-                    "parkiran_b" -> "Gedung B"
-                    "parkiran_c" -> "Gedung C"
-                    "parkiran_d" -> "Gedung D"
-                    else -> "Gedung Utama"
-                }
+                val now = Timestamp.now()
                 val newData = mapOf(
                     "name" to name,
-                    "location" to location,
+                    "location" to areaLocation(id),
                     "status" to status.name,
                     "notes" to notes,
-                    "updatedAt" to Timestamp.now(),
-                    "updatedBy" to officerName
+                    "updatedAt" to now,
+                    "updatedBy" to officerName,
                 )
                 firestore.collection("parkir_areas").document(id).set(newData).await()
 
@@ -166,8 +162,8 @@ class ParkingRepository {
                     "areaId" to id,
                     "areaName" to name,
                     "status" to status.name,
-                    "timestamp" to Timestamp.now(),
-                    "officerName" to officerName
+                    "timestamp" to now,
+                    "officerName" to officerName,
                 )
                 firestore.collection("parkir_logs").add(logData).await()
 
@@ -192,21 +188,21 @@ class ParkingRepository {
                     val areaId = doc.getString("areaId") ?: ""
                     val areaName = doc.getString("areaName") ?: ""
                     val statusStr = doc.getString("status") ?: "SEPI"
-                    val status = try { ParkingStatus.valueOf(statusStr) } catch(e: Exception) { ParkingStatus.SEPI }
+                    val status = try {
+                        ParkingStatus.valueOf(statusStr)
+                    } catch (e: Exception) {
+                        ParkingStatus.SEPI
+                    }
                     val timestamp = doc.getTimestamp("timestamp")
                     val officerName = doc.getString("officerName") ?: ""
-                    
-                    val formatter = java.text.SimpleDateFormat("HH:mm 'WITA'", java.util.Locale.getDefault()).apply {
-                        timeZone = java.util.TimeZone.getTimeZone("Asia/Makassar")
-                    }
-                    val timeLabel = timestamp?.toDate()?.let { formatter.format(it) } ?: ""
-                    
+
+                    // Gunakan cached formatter
+                    val timeLabel = timestamp?.toDate()?.let { timeFormatter.format(it) } ?: ""
+
                     val minutesAgo = timestamp?.let {
                         val diffMs = System.currentTimeMillis() - it.toDate().time
                         (diffMs / (1000 * 60)).toInt().coerceAtLeast(0)
                     } ?: 0
-                    
-                    val agoLabel = formatRelativeTime(minutesAgo)
 
                     ActivityLog(
                         id = doc.id,
@@ -214,12 +210,12 @@ class ParkingRepository {
                         area = areaName,
                         status = status,
                         timeLabel = timeLabel,
-                        agoLabel = agoLabel,
+                        agoLabel = formatRelativeTime(minutesAgo),
                         timestamp = timestamp,
-                        officer = officerName
+                        officer = officerName,
                     )
                 } ?: emptyList()
-                
+
                 trySend(logs)
             }
         awaitClose { listener.remove() }
@@ -236,25 +232,32 @@ class ParkingRepository {
     }
 
     suspend fun generateDummyData() {
-        val areas = listOf("parkiran_a" to "Parkiran A", "parkiran_b" to "Parkiran B", "parkiran_c" to "Parkiran C", "parkiran_d" to "Parkiran D")
+        val areas = listOf(
+            "parkiran_a" to "Parkiran A",
+            "parkiran_b" to "Parkiran B",
+            "parkiran_c" to "Parkiran C",
+            "parkiran_d" to "Parkiran D",
+        )
         val statuses = listOf(ParkingStatus.SEPI, ParkingStatus.SEDANG, ParkingStatus.PENUH)
         val oneDayMs = 24 * 60 * 60 * 1000L
         val now = System.currentTimeMillis()
-        
-        // Buat 100 log acak selama 7 hari terakhir
+        val logsCollection = firestore.collection("parkir_logs")
+
+        // Gunakan WriteBatch untuk efisiensi — maksimal 500 operasi per batch
+        val batch = firestore.batch()
         for (i in 0..100) {
             val randomTime = now - (Math.random() * 7 * oneDayMs).toLong()
             val area = areas.random()
             val status = statuses.random()
-            
             val logData = mapOf(
                 "areaId" to area.first,
                 "areaName" to area.second,
                 "status" to status.name,
                 "timestamp" to Timestamp(java.util.Date(randomTime)),
-                "officerName" to "Simulasi Bot"
+                "officerName" to "Simulasi Bot",
             )
-            firestore.collection("parkir_logs").add(logData).await()
+            batch.set(logsCollection.document(), logData)
         }
+        batch.commit().await()
     }
 }

@@ -146,7 +146,8 @@ fun AppNavigation(
                 ProfilePetugasScreen(
                     navController = navController,
                     onLogoutClick = { authViewModel.logout() },
-                    currentUser = authViewModel.currentUser
+                    currentUser = authViewModel.currentUser,
+                    viewModel = parkingViewModel
                 )
             }
             composable(

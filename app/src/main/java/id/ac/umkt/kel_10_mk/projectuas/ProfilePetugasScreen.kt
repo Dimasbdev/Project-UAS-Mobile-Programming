@@ -70,6 +70,7 @@ fun ProfilePetugasScreen(
     navController: NavHostController,
     onLogoutClick: () -> Unit = {},
     currentUser: User? = null,
+    viewModel: ParkingViewModel,
 ) {
     val view = LocalView.current
     val context = LocalContext.current
@@ -128,6 +129,7 @@ fun ProfilePetugasScreen(
                 fontSize = 12.sp,
                 letterSpacing = 1.2.sp,
             )
+            DummyDataCard(onGenerateClick = { viewModel.generateDummyData() })
             LogoutCard(onLogoutClick = { showLogoutDialog = true })
             Spacer(modifier = Modifier.height(12.dp))
         }
@@ -346,6 +348,59 @@ private fun LogoutCard(onLogoutClick: () -> Unit) {
                 fontWeight = FontWeight.SemiBold,
                 fontSize = 15.sp,
             )
+        }
+        Icon(
+            imageVector = Icons.Default.ChevronRight,
+            contentDescription = null,
+            tint = ParkirTextSecondary,
+            modifier = Modifier.size(18.dp),
+        )
+    }
+}
+
+@Composable
+private fun DummyDataCard(onGenerateClick: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(ParkirSurface, RoundedCornerShape(18.dp))
+            .border(BorderStroke(1.dp, ParkirDivider), RoundedCornerShape(18.dp))
+            .padding(horizontal = 18.dp, vertical = 16.dp)
+            .clickable { onGenerateClick() },
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween,
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(36.dp)
+                    .background(ParkirIconChip, CircleShape),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    imageVector = Icons.Default.History, // Bisa diganti ikon lain
+                    contentDescription = "Simulasi Data",
+                    tint = ParkirAccent,
+                    modifier = Modifier.size(18.dp),
+                )
+            }
+            Column {
+                Text(
+                    text = "Generate Data Simulasi",
+                    color = ParkirTextPrimary,
+                    fontFamily = SpaceGroteskFamily,
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 15.sp,
+                )
+                Text(
+                    text = "Buat 100 log acak (7 Hari Terakhir)",
+                    color = ParkirTextSecondary,
+                    fontSize = 11.sp,
+                )
+            }
         }
         Icon(
             imageVector = Icons.Default.ChevronRight,

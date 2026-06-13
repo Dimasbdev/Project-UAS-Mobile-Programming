@@ -13,11 +13,9 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
@@ -27,15 +25,13 @@ import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Map
-import androidx.compose.material.icons.filled.MoreHoriz
-import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -53,15 +49,16 @@ import androidx.core.view.WindowCompat
 import androidx.navigation.NavHostController
 import id.ac.umkt.kel_10_mk.projectuas.models.ActivityLog
 import id.ac.umkt.kel_10_mk.projectuas.ui.components.BottomNavItemData
+import id.ac.umkt.kel_10_mk.projectuas.ui.components.ChartDataPoint
+import id.ac.umkt.kel_10_mk.projectuas.ui.components.ParkirBarChart
 import id.ac.umkt.kel_10_mk.projectuas.ui.components.ParkirBottomNavBar
 import id.ac.umkt.kel_10_mk.projectuas.ui.components.ParkirTopBar
-import id.ac.umkt.kel_10_mk.projectuas.ui.components.ParkirBarChart
-import id.ac.umkt.kel_10_mk.projectuas.ui.components.ChartDataPoint
 import id.ac.umkt.kel_10_mk.projectuas.ui.components.statusLabel
 import id.ac.umkt.kel_10_mk.projectuas.ui.theme.ParkirAccent
 import id.ac.umkt.kel_10_mk.projectuas.ui.theme.ParkirBackground
 import id.ac.umkt.kel_10_mk.projectuas.ui.theme.ParkirDanger
 import id.ac.umkt.kel_10_mk.projectuas.ui.theme.ParkirDivider
+import id.ac.umkt.kel_10_mk.projectuas.ui.theme.ParkirMapSurface
 import id.ac.umkt.kel_10_mk.projectuas.ui.theme.ParkirSurface
 import id.ac.umkt.kel_10_mk.projectuas.ui.theme.ParkirTextPrimary
 import id.ac.umkt.kel_10_mk.projectuas.ui.theme.ParkirTextSecondary
@@ -80,8 +77,16 @@ fun HistoryMahasiswaScreen(navController: NavHostController, viewModel: ParkingV
         }
     }
 
-    var selectedFilter by remember { mutableStateOf(0) }
+    var selectedFilter by remember { mutableIntStateOf(0) }
     val logs = viewModel.activityLogs
+
+    // derivedStateOf memastikan rekomputasi hanya terjadi ketika logs atau filter benar-benar berubah
+    val filteredLogs by remember {
+        derivedStateOf { filterLogs(logs, selectedFilter) }
+    }
+    val chartData by remember {
+        derivedStateOf { buildChartData(filteredLogs, isToday = selectedFilter == 0) }
+    }
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -107,53 +112,68 @@ fun HistoryMahasiswaScreen(navController: NavHostController, viewModel: ParkingV
                 .padding(horizontal = 20.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            item {
-                ParkirTopBar()
-            }
+            item { ParkirTopBar() }
+
+            item { HistoryTitleSection() }
 
             item {
-                TitleSection()
-            }
-
-            item {
-                FilterTabs(
+                HistoryFilterTabs(
                     selectedIndex = selectedFilter,
                     onSelectedChange = { selectedFilter = it },
                 )
             }
 
             item {
-                AnalyticsCard(logs = logs)
+                HistoryAnalyticsCard(
+                    chartData = chartData,
+                    isToday = selectedFilter == 0,
+                    isEmpty = filteredLogs.isEmpty(),
+                )
             }
 
             item {
                 Text(
-                    text = "Log Aktivitas Terbaru",
-                    color = ParkirTextPrimary,
+                    text = if (filteredLogs.isEmpty()) "Belum ada log aktivitas" else "Log Aktivitas",
+                    color = if (filteredLogs.isEmpty()) ParkirTextSecondary else ParkirTextPrimary,
                     fontFamily = SpaceGroteskFamily,
                     fontWeight = FontWeight.SemiBold,
                     fontSize = 18.sp,
                 )
             }
 
-            items(logs) { log ->
-                ActivityLogCard(log = log)
+            items(filteredLogs, key = { it.id }) { log ->
+                HistoryActivityLogCard(log = log)
             }
 
-            item {
-                ViewAllLogsButton()
+            if (logs.size >= viewModel.logsLimit) {
+                item {
+                    androidx.compose.runtime.LaunchedEffect(Unit) {
+                        viewModel.loadMoreLogs()
+                    }
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 16.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        androidx.compose.material3.CircularProgressIndicator(
+                            color = ParkirAccent,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+                }
             }
 
-            item {
-                Spacer(modifier = Modifier.height(12.dp))
-            }
+            item { Spacer(modifier = Modifier.height(12.dp)) }
         }
     }
 }
 
+// ─── Shared private composables ─────────────────────────────────────────────
+
 @Composable
-private fun TitleSection() {
-    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+internal fun HistoryTitleSection() {
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Text(
             text = "Riwayat & Analitik",
             color = ParkirTextPrimary,
@@ -162,7 +182,7 @@ private fun TitleSection() {
             fontSize = 24.sp,
         )
         Text(
-            text = "Ringkasan kepadatan parkir harian kampus",
+            text = "Ringkasan kepadatan parkir kampus",
             color = ParkirTextSecondary,
             fontSize = 13.sp,
         )
@@ -170,10 +190,7 @@ private fun TitleSection() {
 }
 
 @Composable
-private fun FilterTabs(
-    selectedIndex: Int,
-    onSelectedChange: (Int) -> Unit,
-) {
+internal fun HistoryFilterTabs(selectedIndex: Int, onSelectedChange: (Int) -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -182,65 +199,34 @@ private fun FilterTabs(
             .padding(6.dp),
         horizontalArrangement = Arrangement.spacedBy(6.dp),
     ) {
-        FilterTab(
-            label = "Hari Ini",
-            isSelected = selectedIndex == 0,
-            onClick = { onSelectedChange(0) },
-            modifier = Modifier.weight(1f),
-        )
-        FilterTab(
-            label = "Minggu Ini",
-            isSelected = selectedIndex == 1,
-            onClick = { onSelectedChange(1) },
-            modifier = Modifier.weight(1f),
-        )
-    }
-}
-
-@Composable
-private fun FilterTab(
-    label: String,
-    isSelected: Boolean,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val backgroundColor = if (isSelected) ParkirAccent else Color.Transparent
-    val textColor = if (isSelected) Color(0xFF0F1A18) else ParkirTextSecondary
-
-    Box(
-        modifier = modifier
-            .clip(RoundedCornerShape(999.dp))
-            .background(backgroundColor)
-            .clickable(onClick = onClick)
-            .padding(vertical = 8.dp),
-        contentAlignment = Alignment.Center,
-    ) {
-        Text(
-            text = label,
-            color = textColor,
-            fontSize = 13.sp,
-            fontWeight = FontWeight.SemiBold,
-        )
-    }
-}
-
-@Composable
-private fun AnalyticsCard(logs: List<ActivityLog>) {
-    val chartData = remember(logs) {
-        if (logs.isEmpty()) {
-            listOf(
-                ChartDataPoint("07", ParkingStatus.SEPI),
-                ChartDataPoint("08", ParkingStatus.SEDANG),
-                ChartDataPoint("09", ParkingStatus.PENUH)
-            )
-        } else {
-            logs.take(7).reversed().map { log ->
-                val hour = log.timeLabel.substringBefore(":")
-                ChartDataPoint(hour, log.status)
+        listOf("Hari Ini", "7 Hari Terakhir").forEachIndexed { index, label ->
+            val isSelected = selectedIndex == index
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .clip(RoundedCornerShape(999.dp))
+                    .background(if (isSelected) ParkirAccent else Color.Transparent)
+                    .clickable { onSelectedChange(index) }
+                    .padding(vertical = 9.dp),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(
+                    text = label,
+                    color = if (isSelected) Color(0xFF0A0E1A) else ParkirTextSecondary,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.SemiBold,
+                )
             }
         }
     }
+}
 
+@Composable
+internal fun HistoryAnalyticsCard(
+    chartData: List<ChartDataPoint>,
+    isToday: Boolean,
+    isEmpty: Boolean,
+) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -249,114 +235,86 @@ private fun AnalyticsCard(logs: List<ActivityLog>) {
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(
-                text = "Kepadatan Parkir per Jam",
-                color = ParkirTextPrimary,
-                fontFamily = SpaceGroteskFamily,
-                fontWeight = FontWeight.SemiBold,
-                fontSize = 16.sp,
-            )
-            Icon(
-                imageVector = Icons.Default.MoreHoriz,
-                contentDescription = "Opsi",
-                tint = ParkirAccent,
-            )
-        }
+        Text(
+            text = if (isToday) "Kepadatan per Jam · Hari Ini" else "Rata-rata per Hari · 7 Hari Terakhir",
+            color = ParkirTextPrimary,
+            fontFamily = SpaceGroteskFamily,
+            fontWeight = FontWeight.SemiBold,
+            fontSize = 14.sp,
+        )
 
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(160.dp)
-                .clip(RoundedCornerShape(14.dp))
-                .background(id.ac.umkt.kel_10_mk.projectuas.ui.theme.ParkirMapSurface)
-                .padding(horizontal = 16.dp, vertical = 12.dp)
+                .clip(RoundedCornerShape(12.dp))
+                .background(ParkirMapSurface)
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            contentAlignment = Alignment.Center,
         ) {
-            ParkirBarChart(data = chartData)
+            if (isEmpty || chartData.isEmpty()) {
+                Text(
+                    text = "Belum ada data untuk rentang ini",
+                    color = ParkirTextSecondary,
+                    fontSize = 13.sp,
+                )
+            } else {
+                ParkirBarChart(data = chartData)
+            }
         }
     }
 }
 
 @Composable
-private fun ActivityLogCard(log: ActivityLog) {
+internal fun HistoryActivityLogCard(log: ActivityLog) {
     val statusColor = when (log.status) {
         ParkingStatus.SEPI -> ParkirAccent
         ParkingStatus.SEDANG -> ParkirWarning
         ParkingStatus.PENUH -> ParkirDanger
     }
 
-    Column(
+    Row(
         modifier = Modifier
             .fillMaxWidth()
             .background(ParkirSurface, RoundedCornerShape(14.dp))
             .border(BorderStroke(1.dp, ParkirDivider), RoundedCornerShape(14.dp))
             .padding(14.dp),
-        verticalArrangement = Arrangement.spacedBy(6.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+            modifier = Modifier.weight(1f),
         ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(10.dp)
-                        .background(statusColor, CircleShape),
-                )
-                Column {
-                    Text(
-                        text = "${log.area} - ${statusLabel(log.status)}",
-                        color = ParkirTextPrimary,
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                    val timeLabel = if (log.officer.isNullOrBlank()) {
-                        log.timeLabel
-                    } else {
-                        "${log.timeLabel} - oleh ${log.officer}"
-                    }
-                    Text(
-                        text = timeLabel,
-                        color = ParkirTextSecondary,
-                        fontSize = 12.sp,
-                    )
-                }
-            }
-            Text(
-                text = log.agoLabel,
-                color = ParkirTextSecondary,
-                fontSize = 12.sp,
+            Box(
+                modifier = Modifier
+                    .size(9.dp)
+                    .background(statusColor, CircleShape),
             )
+            Column {
+                Text(
+                    text = "${log.area} · ${statusLabel(log.status)}",
+                    color = ParkirTextPrimary,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                Text(
+                    text = if (log.officer.isNullOrBlank()) log.timeLabel
+                           else "${log.timeLabel} · ${log.officer}",
+                    color = ParkirTextSecondary,
+                    fontSize = 12.sp,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
         }
-    }
-}
-
-@Composable
-private fun ViewAllLogsButton() {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(ParkirSurface, RoundedCornerShape(14.dp))
-            .border(BorderStroke(1.dp, ParkirDivider), RoundedCornerShape(14.dp))
-            .padding(vertical = 14.dp),
-        contentAlignment = Alignment.Center,
-    ) {
         Text(
-            text = "Lihat Semua Log",
-            color = ParkirAccent,
-            fontFamily = SpaceGroteskFamily,
-            fontWeight = FontWeight.SemiBold,
-            fontSize = 14.sp,
+            text = log.agoLabel,
+            color = ParkirTextSecondary,
+            fontSize = 12.sp,
         )
     }
 }

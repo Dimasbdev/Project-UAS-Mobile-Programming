@@ -179,10 +179,10 @@ class ParkingRepository {
     }
 
     // Ambil log aktivitas parkir
-    fun getActivityLogs(): Flow<List<ActivityLog>> = callbackFlow {
+    fun getActivityLogs(limit: Int = 50): Flow<List<ActivityLog>> = callbackFlow {
         val listener = firestore.collection("parkir_logs")
             .orderBy("timestamp", Query.Direction.DESCENDING)
-            .limit(50)
+            .limit(limit.toLong())
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
                     close(error)
@@ -232,6 +232,29 @@ class ParkingRepository {
             minutesAgo < 1440 -> "${minutesAgo / 60} jam lalu"
             minutesAgo < 43200 -> "${minutesAgo / 1440} hari lalu"
             else -> "${minutesAgo / 43200} bulan lalu"
+        }
+    }
+
+    suspend fun generateDummyData() {
+        val areas = listOf("parkiran_a" to "Parkiran A", "parkiran_b" to "Parkiran B", "parkiran_c" to "Parkiran C", "parkiran_d" to "Parkiran D")
+        val statuses = listOf(ParkingStatus.SEPI, ParkingStatus.SEDANG, ParkingStatus.PENUH)
+        val oneDayMs = 24 * 60 * 60 * 1000L
+        val now = System.currentTimeMillis()
+        
+        // Buat 100 log acak selama 7 hari terakhir
+        for (i in 0..100) {
+            val randomTime = now - (Math.random() * 7 * oneDayMs).toLong()
+            val area = areas.random()
+            val status = statuses.random()
+            
+            val logData = mapOf(
+                "areaId" to area.first,
+                "areaName" to area.second,
+                "status" to status.name,
+                "timestamp" to Timestamp(java.util.Date(randomTime)),
+                "officerName" to "Simulasi Bot"
+            )
+            firestore.collection("parkir_logs").add(logData).await()
         }
     }
 }

@@ -30,14 +30,20 @@ class ParkingViewModel(
     var activityLogs by mutableStateOf<List<id.ac.umkt.kel_10_mk.projectuas.models.ActivityLog>>(emptyList())
         private set
 
+    var logsLimit by androidx.compose.runtime.mutableIntStateOf(50)
+        private set
+
+    private var logsJob: kotlinx.coroutines.Job? = null
+
     init {
         observeParkingAreas()
         observeActivityLogs()
     }
 
     private fun observeActivityLogs() {
-        viewModelScope.launch {
-            repository.getActivityLogs()
+        logsJob?.cancel()
+        logsJob = viewModelScope.launch {
+            repository.getActivityLogs(logsLimit)
                 .catch {
                     // Fallback
                     activityLogs = emptyList()
@@ -46,6 +52,11 @@ class ParkingViewModel(
                     activityLogs = logs
                 }
         }
+    }
+
+    fun loadMoreLogs() {
+        logsLimit += 50
+        observeActivityLogs()
     }
 
     private fun observeParkingAreas() {
@@ -93,6 +104,15 @@ class ParkingViewModel(
                 .onFailure {
                     _uiEvent.emit("UPDATE_FAILURE")
                 }
+            isLoading = false
+        }
+    }
+
+    fun generateDummyData() {
+        viewModelScope.launch {
+            isLoading = true
+            repository.generateDummyData()
+            _uiEvent.emit("DUMMY_DATA_SUCCESS")
             isLoading = false
         }
     }

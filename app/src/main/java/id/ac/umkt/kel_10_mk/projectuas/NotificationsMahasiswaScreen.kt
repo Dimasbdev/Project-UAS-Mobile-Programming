@@ -70,25 +70,28 @@ fun NotificationsMahasiswaScreen(navController: NavHostController, viewModel: Pa
 
     val logs = viewModel.activityLogs
     val notifications = androidx.compose.runtime.remember(logs) {
-        logs.map { log ->
+        logs.mapNotNull { log ->
+            val minutesAgo = log.timestamp?.let {
+                val diffMs = System.currentTimeMillis() - it.toDate().time
+                (diffMs / (1000 * 60)).toInt()
+            } ?: 0
+
+            // Hapus notifikasi yang sudah lebih dari 24 jam (1440 menit)
+            if (minutesAgo > 1440) return@mapNotNull null
+
             val message = when (log.status) {
                 ParkingStatus.PENUH -> "Parkiran penuh, coba cari alternatif parkiran lain."
                 ParkingStatus.SEDANG -> "Parkiran mulai ramai, segera amankan tempatmu."
                 ParkingStatus.SEPI -> "Slot parkir masih tersedia. Kamu bisa menuju ke sana."
             }
             
-            val minutesAgo = log.timestamp?.let {
-                val diffMs = System.currentTimeMillis() - it.toDate().time
-                (diffMs / (1000 * 60)).toInt()
-            } ?: 0
-
             NotificationItem(
                 title = "${log.area} kini ${log.status.name}",
                 message = message,
                 time = log.timeLabel,
                 isUnread = minutesAgo < 60
             )
-        }
+        }.take(20) // Maksimal 20 notifikasi
     }
 
     Scaffold(

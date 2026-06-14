@@ -118,7 +118,11 @@ fun HistoryMahasiswaScreen(navController: NavHostController, viewModel: ParkingV
                 .padding(horizontal = 20.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            item { ParkirTopBar() }
+            item { 
+                ParkirTopBar(
+                    onActionClick = { navController.navigate(RouteNotificationsMahasiswa) }
+                ) 
+            }
 
             item { HistoryTitleSection() }
 

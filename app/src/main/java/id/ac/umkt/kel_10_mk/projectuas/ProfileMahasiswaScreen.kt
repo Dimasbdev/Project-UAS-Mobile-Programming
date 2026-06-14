@@ -136,7 +136,9 @@ fun ProfileMahasiswaScreen(
                 .padding(horizontal = 20.dp),
             verticalArrangement = Arrangement.spacedBy(18.dp),
         ) {
-            ParkirTopBar()
+            ParkirTopBar(
+                onActionClick = { navController.navigate(RouteNotificationsMahasiswa) }
+            )
             Text(
                 text = "Profil Saya",
                 color = ParkirTextPrimary,

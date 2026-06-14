@@ -108,7 +108,9 @@ fun MapMahasiswaScreen(navController: NavHostController, parkingViewModel: Parki
                 .padding(horizontal = 20.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            ParkirTopBar()
+            ParkirTopBar(
+                onActionClick = { navController.navigate(RouteNotificationsMahasiswa) }
+            )
 
             Text(
                 text = "Peta Parkir Kampus",

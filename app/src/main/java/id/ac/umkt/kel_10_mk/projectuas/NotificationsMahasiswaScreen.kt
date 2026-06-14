@@ -30,6 +30,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -60,22 +61,13 @@ private data class NotificationItem(
 
 @Composable
 fun NotificationsMahasiswaScreen(navController: NavHostController, viewModel: ParkingViewModel) {
-    val view = LocalView.current
-    val context = LocalContext.current
+    id.ac.umkt.kel_10_mk.projectuas.ui.components.SetDarkStatusBar()
 
-    SideEffect {
-        (context as? Activity)?.window?.run {
-            statusBarColor = ParkirBackground.toArgb()
-            WindowCompat.getInsetsController(this, view).isAppearanceLightStatusBars = false
-        }
-    }
-
-    val logs by viewModel.activityLogs.collectAsState()
+    val logs by viewModel.activityLogs.collectAsStateWithLifecycle()
     val notifications = androidx.compose.runtime.remember(logs) {
         logs.mapNotNull { log ->
-            val minutesAgo = log.timestamp?.let {
-                val diffMs = System.currentTimeMillis() - it.toDate().time
-                (diffMs / (1000 * 60)).toInt()
+            val minutesAgo = log.timestampMs?.let {
+                ((System.currentTimeMillis() - it) / 60000).toInt().coerceAtLeast(0)
             } ?: 0
 
             // Hapus notifikasi yang sudah lebih dari 24 jam (1440 menit)

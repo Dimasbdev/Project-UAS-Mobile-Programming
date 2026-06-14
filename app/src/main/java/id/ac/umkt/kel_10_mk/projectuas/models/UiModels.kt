@@ -1,9 +1,9 @@
 package id.ac.umkt.kel_10_mk.projectuas.models
 
+import androidx.compose.runtime.Immutable
 import id.ac.umkt.kel_10_mk.projectuas.ParkingStatus
 
-import com.google.firebase.Timestamp
-
+@Immutable
 data class ParkingArea(
     val name: String = "",
     val location: String = "",
@@ -11,7 +11,7 @@ data class ParkingArea(
     val updatedMinutes: Int? = null,
     val updatedAgoLabel: String = "",
     val id: String = "",
-    val updatedAt: Timestamp? = null,
+    val updatedAtMs: Long? = null,
     val updatedBy: String = "",
     val notes: String = ""
 )
@@ -22,6 +22,7 @@ data class ParkingMarker(
     val status: ParkingStatus,
 )
 
+@Immutable
 data class ActivityLog(
     val id: String = "",
     val areaId: String = "",
@@ -29,6 +30,6 @@ data class ActivityLog(
     val status: ParkingStatus = ParkingStatus.SEPI,
     val timeLabel: String = "",
     val agoLabel: String = "",
-    val timestamp: Timestamp? = null,
+    val timestampMs: Long? = null,
     val officer: String? = null,
 )

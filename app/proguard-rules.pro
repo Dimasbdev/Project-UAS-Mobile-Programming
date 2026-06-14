@@ -12,10 +12,18 @@
 #   public *;
 #}
 
-# Uncomment this to preserve the line number information for
-# debugging stack traces.
-#-keepattributes SourceFile,LineNumberTable
-
-# If you keep the line number information, uncomment this to
-# hide the original source file name.
 #-renamesourcefileattribute SourceFile
+
+# Preserve Jetpack Compose annotations
+-keepattributes *Annotation*
+-keepclassmembers class ** {
+    @androidx.compose.runtime.Immutable *;
+    @androidx.compose.runtime.Stable *;
+}
+
+# Keep Firebase models (avoid minification breaking mapping)
+-keepclassmembers class id.ac.umkt.kel_10_mk.projectuas.models.** { *; }
+-keep class id.ac.umkt.kel_10_mk.projectuas.models.** { *; }
+
+# Keep line numbers for crash reporting
+-keepattributes SourceFile,LineNumberTable

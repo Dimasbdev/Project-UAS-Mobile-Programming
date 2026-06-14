@@ -1,5 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <style name="Theme.App.Starting" parent="Theme.SplashScreen">
+        <!-- Latar belakang saat splash screen -->
+        <item name="windowSplashScreenBackground">@color/parkir_background</item>
+        <!-- Ikon tengah (bisa berupa mipmap icon aplikasi atau drawable khusus) -->
+        <item name="windowSplashScreenAnimatedIcon">@mipmap/ic_launcher_round</item>
+        <!-- Tema tujuan yang akan dimuat setelah splash screen selesai -->
+        <item name="postSplashScreenTheme">@style/Theme.PROJECTUAS</item>
+    </style>
+
     <style name="Theme.PROJECTUAS" parent="android:Theme.Material.NoActionBar">
         <item name="android:windowBackground">@color/parkir_background</item>
         <item name="android:statusBarColor">@color/parkir_background</item>

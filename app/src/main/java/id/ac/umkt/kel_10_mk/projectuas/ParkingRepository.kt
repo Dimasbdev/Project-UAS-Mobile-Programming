@@ -65,9 +65,39 @@ class ParkingRepository {
             updatedMinutes = minutesAgo,
             updatedAgoLabel = formatRelativeTime(minutesAgo),
             id = docId,
-            updatedAt = updatedAt,
+            updatedAtMs = updatedAt?.toDate()?.time,
             updatedBy = updatedBy,
             notes = notes,
+        )
+    }
+
+    private fun documentToActivityLog(doc: com.google.firebase.firestore.DocumentSnapshot): ActivityLog? {
+        val areaId = doc.getString("areaId") ?: return null
+        val areaName = doc.getString("areaName") ?: ""
+        val statusStr = doc.getString("status") ?: "SEPI"
+        val status = try {
+            ParkingStatus.valueOf(statusStr)
+        } catch (e: Exception) {
+            ParkingStatus.SEPI
+        }
+        val timestamp = doc.getTimestamp("timestamp")
+        val officerName = doc.getString("officerName") ?: ""
+
+        val timeLabel = timestamp?.toDate()?.let { timeFormatter.format(it) } ?: ""
+        val minutesAgo = timestamp?.let {
+            val diffMs = System.currentTimeMillis() - it.toDate().time
+            (diffMs / (1000 * 60)).toInt().coerceAtLeast(0)
+        } ?: 0
+
+        return ActivityLog(
+            id = doc.id,
+            areaId = areaId,
+            area = areaName,
+            status = status,
+            timeLabel = timeLabel,
+            agoLabel = formatRelativeTime(minutesAgo),
+            timestampMs = timestamp?.toDate()?.time,
+            officer = officerName,
         )
     }
 
@@ -185,35 +215,7 @@ class ParkingRepository {
                     return@addSnapshotListener
                 }
                 val logs = snapshot?.documents?.mapNotNull { doc ->
-                    val areaId = doc.getString("areaId") ?: ""
-                    val areaName = doc.getString("areaName") ?: ""
-                    val statusStr = doc.getString("status") ?: "SEPI"
-                    val status = try {
-                        ParkingStatus.valueOf(statusStr)
-                    } catch (e: Exception) {
-                        ParkingStatus.SEPI
-                    }
-                    val timestamp = doc.getTimestamp("timestamp")
-                    val officerName = doc.getString("officerName") ?: ""
-
-                    // Gunakan cached formatter
-                    val timeLabel = timestamp?.toDate()?.let { timeFormatter.format(it) } ?: ""
-
-                    val minutesAgo = timestamp?.let {
-                        val diffMs = System.currentTimeMillis() - it.toDate().time
-                        (diffMs / (1000 * 60)).toInt().coerceAtLeast(0)
-                    } ?: 0
-
-                    ActivityLog(
-                        id = doc.id,
-                        areaId = areaId,
-                        area = areaName,
-                        status = status,
-                        timeLabel = timeLabel,
-                        agoLabel = formatRelativeTime(minutesAgo),
-                        timestamp = timestamp,
-                        officer = officerName,
-                    )
+                    documentToActivityLog(doc)
                 } ?: emptyList()
 
                 trySend(logs)
@@ -232,32 +234,7 @@ class ParkingRepository {
                     return@addSnapshotListener
                 }
                 val logs = snapshot?.documents?.mapNotNull { doc ->
-                    val areaId = doc.getString("areaId") ?: ""
-                    val areaName = doc.getString("areaName") ?: ""
-                    val statusStr = doc.getString("status") ?: "SEPI"
-                    val status = try {
-                        ParkingStatus.valueOf(statusStr)
-                    } catch (e: Exception) {
-                        ParkingStatus.SEPI
-                    }
-                    val timestamp = doc.getTimestamp("timestamp")
-                    val officerName = doc.getString("officerName") ?: ""
-                    val timeLabel = timestamp?.toDate()?.let { timeFormatter.format(it) } ?: ""
-                    val minutesAgo = timestamp?.let {
-                        val diffMs = System.currentTimeMillis() - it.toDate().time
-                        (diffMs / (1000 * 60)).toInt().coerceAtLeast(0)
-                    } ?: 0
-
-                    ActivityLog(
-                        id = doc.id,
-                        areaId = areaId,
-                        area = areaName,
-                        status = status,
-                        timeLabel = timeLabel,
-                        agoLabel = formatRelativeTime(minutesAgo),
-                        timestamp = timestamp,
-                        officer = officerName,
-                    )
+                    documentToActivityLog(doc)
                 } ?: emptyList()
 
                 trySend(logs)

@@ -10,5 +10,7 @@ val SpaceGroteskFamily = FontFamily(
     Font(R.font.space_grotesk_medium, FontWeight.Medium),
     Font(R.font.spacegrotesk_semibold, FontWeight.SemiBold),
     Font(R.font.space_grotesk_bold, FontWeight.Bold),
+    Font(R.font.space_grotesk_bold, FontWeight.ExtraBold),
+    Font(R.font.space_grotesk_bold, FontWeight.Black),
     Font(R.font.space_grotesk_light, FontWeight.Light),
 )

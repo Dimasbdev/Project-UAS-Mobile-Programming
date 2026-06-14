@@ -23,6 +23,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Map
+import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
@@ -88,6 +92,20 @@ data class BottomNavItemData(
     val label: String,
     val icon: ImageVector,
     val route: String,
+)
+
+val mahasiswaNavItems = listOf(
+    BottomNavItemData("Home", androidx.compose.material.icons.Icons.Default.Home, id.ac.umkt.kel_10_mk.projectuas.RouteDashboardMahasiswa),
+    BottomNavItemData("Map", androidx.compose.material.icons.Icons.Default.Map, id.ac.umkt.kel_10_mk.projectuas.RouteMapMahasiswa),
+    BottomNavItemData("History", androidx.compose.material.icons.Icons.Default.History, id.ac.umkt.kel_10_mk.projectuas.RouteHistoryMahasiswa),
+    BottomNavItemData("Profile", androidx.compose.material.icons.Icons.Default.AccountCircle, id.ac.umkt.kel_10_mk.projectuas.RouteProfileMahasiswa),
+)
+
+val petugasNavItems = listOf(
+    BottomNavItemData("Home", androidx.compose.material.icons.Icons.Default.Home, id.ac.umkt.kel_10_mk.projectuas.RouteDashboardPetugas),
+    BottomNavItemData("Map", androidx.compose.material.icons.Icons.Default.Map, id.ac.umkt.kel_10_mk.projectuas.RouteMapPetugas),
+    BottomNavItemData("History", androidx.compose.material.icons.Icons.Default.History, id.ac.umkt.kel_10_mk.projectuas.RouteHistoryPetugas),
+    BottomNavItemData("Profile", androidx.compose.material.icons.Icons.Default.AccountCircle, id.ac.umkt.kel_10_mk.projectuas.RouteProfilePetugas),
 )
 
 @Composable
@@ -240,4 +258,102 @@ fun statusLabel(status: ParkingStatus): String = when (status) {
     ParkingStatus.SEPI -> "SEPI"
     ParkingStatus.SEDANG -> "SEDANG"
     ParkingStatus.PENUH -> "PENUH"
+}
+
+@Composable
+fun ParkingStatusSummaryCard(
+    areas: List<id.ac.umkt.kel_10_mk.projectuas.models.ParkingArea>,
+    modifier: Modifier = Modifier
+) {
+    val sepiCount = areas.count { it.status == ParkingStatus.SEPI }
+    val sedangCount = areas.count { it.status == ParkingStatus.SEDANG }
+    val penuhCount = areas.count { it.status == ParkingStatus.PENUH }
+
+    val lastUpdatedLabel = androidx.compose.runtime.remember(areas) {
+        areas.mapNotNull { it.updatedAtMs }
+            .maxOrNull()
+            ?.let { lastMs ->
+                val diffMin = ((System.currentTimeMillis() - lastMs) / 60000).toInt()
+                when {
+                    diffMin < 1 -> "baru saja"
+                    diffMin < 60 -> "$diffMin menit lalu"
+                    else -> "${diffMin / 60} jam lalu"
+                }
+            } ?: "belum ada data"
+    }
+
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .background(ParkirSurface, RoundedCornerShape(16.dp))
+            .border(BorderStroke(1.dp, ParkirDivider), RoundedCornerShape(16.dp))
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Text(
+            text = "Status Parkir Kampus",
+            color = ParkirTextPrimary,
+            fontFamily = SpaceGroteskFamily,
+            fontWeight = FontWeight.SemiBold,
+            fontSize = 16.sp,
+        )
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            StatusSummaryChip(label = "$sepiCount Area Sepi", color = ParkirAccent)
+            StatusSummaryChip(label = "$sedangCount Area Sedang", color = ParkirWarning)
+        }
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            StatusSummaryChip(label = "$penuhCount Area Penuh", color = ParkirDanger)
+        }
+
+        Text(
+            text = "Terakhir diperbarui $lastUpdatedLabel",
+            color = ParkirTextSecondary,
+            fontSize = 12.sp,
+        )
+    }
+}
+
+@Composable
+private fun StatusSummaryChip(label: String, color: Color) {
+    Row(
+        modifier = Modifier
+            .background(color.copy(alpha = 0.1f), RoundedCornerShape(8.dp))
+            .border(BorderStroke(1.dp, color.copy(alpha = 0.3f)), RoundedCornerShape(8.dp))
+            .padding(horizontal = 12.dp, vertical = 6.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
+        Box(
+            modifier = Modifier
+                .size(8.dp)
+                .background(color, CircleShape),
+        )
+        Text(
+            text = label,
+            color = color,
+            fontWeight = FontWeight.SemiBold,
+            fontSize = 13.sp,
+        )
+        )
+    }
+}
+
+@Composable
+fun SetDarkStatusBar() {
+    val view = androidx.compose.ui.platform.LocalView.current
+    val context = androidx.compose.ui.platform.LocalContext.current
+    androidx.compose.runtime.SideEffect {
+        (context as? android.app.Activity)?.window?.run {
+            statusBarColor = id.ac.umkt.kel_10_mk.projectuas.ui.theme.ParkirBackground.toArgb()
+            androidx.core.view.WindowCompat.getInsetsController(this, view).isAppearanceLightStatusBars = false
+        }
+    }
 }

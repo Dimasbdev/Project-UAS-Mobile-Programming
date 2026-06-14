@@ -21,6 +21,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
+import id.ac.umkt.kel_10_mk.projectuas.ui.components.ParkingStatusSummaryCard
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Map
@@ -29,6 +30,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -59,15 +61,26 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import java.util.TimeZone
+import kotlinx.coroutines.delay
 
-fun formatCurrentWitaTime(): String {
-    return try {
-        val sdf = SimpleDateFormat("HH:mm 'WITA' - EEEE, dd MMMM yyyy", Locale("id", "ID"))
-        sdf.timeZone = TimeZone.getTimeZone("GMT+8")
-        sdf.format(Date())
-    } catch (e: Exception) {
-        "08:00 WITA"
-    }
+private val witaFormatter = SimpleDateFormat("HH:mm 'WITA' - EEEE, dd MMMM yyyy", Locale("id", "ID")).apply {
+    timeZone = TimeZone.getTimeZone("GMT+8")
+}
+
+fun formatCurrentWitaTime(): String = try {
+    witaFormatter.format(Date())
+} catch (e: Exception) {
+    "08:00 WITA"
+}
+
+@Composable
+fun rememberWitaTime(): String {
+    return androidx.compose.runtime.produceState(initialValue = formatCurrentWitaTime()) {
+        while (true) {
+            delay(60_000L) // update setiap menit
+            value = formatCurrentWitaTime()
+        }
+    }.value
 }
 
 @Composable
@@ -76,17 +89,9 @@ fun DashboardMahasiswaScreen(
     parkingViewModel: ParkingViewModel,
     studentName: String
 ) {
-    val view = androidx.compose.ui.platform.LocalView.current
-    val context = androidx.compose.ui.platform.LocalContext.current
+    id.ac.umkt.kel_10_mk.projectuas.ui.components.SetDarkStatusBar()
 
-    SideEffect {
-        (context as? Activity)?.window?.run {
-            statusBarColor = ParkirBackground.toArgb()
-            WindowCompat.getInsetsController(this, view).isAppearanceLightStatusBars = false
-        }
-    }
-
-    val areas by parkingViewModel.parkingAreas.collectAsState()
+    val areas by parkingViewModel.parkingAreas.collectAsStateWithLifecycle()
     val summary = remember(areas) {
         areas.groupBy { it.status }.mapValues { it.value.size }
     }
@@ -97,12 +102,7 @@ fun DashboardMahasiswaScreen(
         bottomBar = {
             ParkirBottomNavBar(
                 navController = navController,
-                items = listOf(
-                    BottomNavItemData("Home", Icons.Default.Home, RouteDashboardMahasiswa),
-                    BottomNavItemData("Map", Icons.Default.Map, RouteMapMahasiswa),
-                    BottomNavItemData("History", Icons.Default.History, RouteHistoryMahasiswa),
-                    BottomNavItemData("Profile", Icons.Default.AccountCircle, RouteProfileMahasiswa),
-                ),
+                items = id.ac.umkt.kel_10_mk.projectuas.ui.components.mahasiswaNavItems,
             )
         },
     ) { paddingValues ->
@@ -124,11 +124,7 @@ fun DashboardMahasiswaScreen(
             item { GreetingSection(studentName) }
 
             item {
-                StatusSummaryCard(
-                    sepiCount = summary[ParkingStatus.SEPI] ?: 0,
-                    sedangCount = summary[ParkingStatus.SEDANG] ?: 0,
-                    penuhCount = summary[ParkingStatus.PENUH] ?: 0,
-                )
+                ParkingStatusSummaryCard(areas = areas)
             }
 
             items(areas) { area ->
@@ -162,50 +158,7 @@ private fun GreetingSection(studentName: String) {
         )
     }
 }
-@Composable
-private fun StatusSummaryCard(
-    sepiCount: Int,
-    sedangCount: Int,
-    penuhCount: Int,
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(ParkirSurface, RoundedCornerShape(16.dp))
-            .border(BorderStroke(1.dp, ParkirDivider), RoundedCornerShape(16.dp))
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        Text(
-            text = "Status Parkir Kampus",
-            color = ParkirTextPrimary,
-            fontFamily = SpaceGroteskFamily,
-            fontWeight = FontWeight.SemiBold,
-            fontSize = 16.sp,
-        )
 
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
-        ) {
-            StatusChip(label = "$sepiCount Area Sepi", color = ParkirAccent)
-            StatusChip(label = "$sedangCount Area Sedang", color = ParkirWarning)
-        }
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
-        ) {
-            StatusChip(label = "$penuhCount Area Penuh", color = ParkirDanger)
-        }
-
-        Text(
-            text = "Terakhir diperbarui 3 menit lalu",
-            color = ParkirTextSecondary,
-            fontSize = 12.sp,
-        )
-    }
-}
 
 @Composable
 private fun ParkingAreaCard(area: ParkingArea) {

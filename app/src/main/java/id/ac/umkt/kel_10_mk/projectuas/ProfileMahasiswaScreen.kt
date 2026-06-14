@@ -80,31 +80,25 @@ fun ProfileMahasiswaScreen(
     onLogoutClick: () -> Unit = {},
     currentUser: User? = null,
 ) {
-    val view = LocalView.current
-    val context = LocalContext.current
-
-    SideEffect {
-        (context as? Activity)?.window?.run {
-            statusBarColor = ParkirBackground.toArgb()
-            WindowCompat.getInsetsController(this, view).isAppearanceLightStatusBars = false
-        }
-    }
+    id.ac.umkt.kel_10_mk.projectuas.ui.components.SetDarkStatusBar()
 
     var showLogoutDialog by remember { mutableStateOf(false) }
-    val menuItems = listOf(
-        ProfileMenuItem(
-            "Notifikasi",
-            Icons.Default.Notifications,
-            ParkirAccent,
-            onClick = { navController.navigate(RouteNotificationsMahasiswa) },
-        ),
-        ProfileMenuItem(
-            "Perizinan Lokasi",
-            Icons.Default.LocationOn,
-            ParkirAccent,
-            onClick = { navController.navigate(RouteLocationPermissionMahasiswa) },
-        ),
-    )
+    val menuItems = remember {
+        listOf(
+            ProfileMenuItem(
+                "Notifikasi",
+                Icons.Default.Notifications,
+                ParkirAccent,
+                onClick = { navController.navigate(RouteNotificationsMahasiswa) },
+            ),
+            ProfileMenuItem(
+                "Perizinan Lokasi",
+                Icons.Default.LocationOn,
+                ParkirAccent,
+                onClick = { navController.navigate(RouteLocationPermissionMahasiswa) },
+            ),
+        )
+    }
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -112,12 +106,7 @@ fun ProfileMahasiswaScreen(
         bottomBar = {
             ParkirBottomNavBar(
                 navController = navController,
-                items = listOf(
-                    BottomNavItemData("Home", Icons.Default.Home, RouteDashboardMahasiswa),
-                    BottomNavItemData("Map", Icons.Default.Map, RouteMapMahasiswa),
-                    BottomNavItemData("History", Icons.Default.History, RouteHistoryMahasiswa),
-                    BottomNavItemData("Profile", Icons.Default.AccountCircle, RouteProfileMahasiswa),
-                ),
+                items = id.ac.umkt.kel_10_mk.projectuas.ui.components.mahasiswaNavItems,
             )
         },
     ) { paddingValues ->

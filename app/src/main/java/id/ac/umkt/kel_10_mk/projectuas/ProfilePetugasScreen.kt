@@ -72,15 +72,7 @@ fun ProfilePetugasScreen(
     currentUser: User? = null,
     viewModel: ParkingViewModel,
 ) {
-    val view = LocalView.current
-    val context = LocalContext.current
-
-    SideEffect {
-        (context as? Activity)?.window?.run {
-            statusBarColor = ParkirBackground.toArgb()
-            WindowCompat.getInsetsController(this, view).isAppearanceLightStatusBars = false
-        }
-    }
+    id.ac.umkt.kel_10_mk.projectuas.ui.components.SetDarkStatusBar()
 
     var showLogoutDialog by remember { mutableStateOf(false) }
 
@@ -90,12 +82,7 @@ fun ProfilePetugasScreen(
         bottomBar = {
             ParkirBottomNavBar(
                 navController = navController,
-                items = listOf(
-                    BottomNavItemData("Home", Icons.Default.Home, RouteDashboardPetugas),
-                    BottomNavItemData("Map", Icons.Default.Map, RouteMapPetugas),
-                    BottomNavItemData("History", Icons.Default.History, RouteHistoryPetugas),
-                    BottomNavItemData("Profile", Icons.Default.AccountCircle, RouteProfilePetugas),
-                ),
+                items = id.ac.umkt.kel_10_mk.projectuas.ui.components.petugasNavItems,
             )
         },
     ) { paddingValues ->

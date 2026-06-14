@@ -32,6 +32,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -80,8 +81,8 @@ fun UpdateKondisiScreen(
         parkingViewModel.loadParkingArea(areaId)
     }
 
-    val currentArea by parkingViewModel.currentArea.collectAsState()
-    val isLoading by parkingViewModel.isLoading.collectAsState()
+    val currentArea by parkingViewModel.currentArea.collectAsStateWithLifecycle()
+    val isLoading by parkingViewModel.isLoading.collectAsStateWithLifecycle()
 
     var selectedStatus by remember { mutableStateOf(ParkingStatus.SEDANG) }
     var note by remember { mutableStateOf("") }
@@ -139,15 +140,19 @@ fun UpdateKondisiScreen(
         )
     }
 
-    val textFieldColors = OutlinedTextFieldDefaults.colors(
-        focusedContainerColor = ParkirBackground,
-        unfocusedContainerColor = ParkirBackground,
-        focusedTextColor = ParkirTextPrimary,
-        unfocusedTextColor = ParkirTextPrimary,
-        cursorColor = ParkirAccent,
-        focusedBorderColor = ParkirAccent,
-        unfocusedBorderColor = ParkirInputBorder,
-    )
+    val textFieldColors = remember {
+        OutlinedTextFieldDefaults.colors(
+            focusedBorderColor = ParkirAccent,
+            unfocusedBorderColor = ParkirDivider,
+            focusedTextColor = ParkirTextPrimary,
+            unfocusedTextColor = ParkirTextPrimary,
+            focusedLabelColor = ParkirAccent,
+            unfocusedLabelColor = ParkirTextSecondary,
+            cursorColor = ParkirAccent,
+            focusedContainerColor = ParkirBackground,
+            unfocusedContainerColor = ParkirBackground,
+        )
+    }
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),

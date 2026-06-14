@@ -21,6 +21,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -50,20 +51,12 @@ import androidx.compose.material.icons.filled.Share
 
 @Composable
 fun HistoryPetugasScreen(navController: NavHostController, viewModel: ParkingViewModel) {
-    val view = LocalView.current
-    val context = LocalContext.current
-
-    SideEffect {
-        (context as? Activity)?.window?.run {
-            statusBarColor = ParkirBackground.toArgb()
-            WindowCompat.getInsetsController(this, view).isAppearanceLightStatusBars = false
-        }
-    }
+    id.ac.umkt.kel_10_mk.projectuas.ui.components.SetDarkStatusBar()
 
     var selectedFilter by remember { mutableIntStateOf(0) }
-    val logs by viewModel.activityLogs.collectAsState()
-    val analyticsLogs by viewModel.analyticsLogs.collectAsState()
-    val logsLimit by viewModel.logsLimit.collectAsState()
+    val logs by viewModel.activityLogs.collectAsStateWithLifecycle()
+    val analyticsLogs by viewModel.analyticsLogs.collectAsStateWithLifecycle()
+    val logsLimit by viewModel.logsLimit.collectAsStateWithLifecycle()
 
     val filteredLogs by remember(logs, selectedFilter) {
         derivedStateOf { filterLogs(logs, selectedFilter) }
@@ -108,12 +101,7 @@ fun HistoryPetugasScreen(navController: NavHostController, viewModel: ParkingVie
         bottomBar = {
             ParkirBottomNavBar(
                 navController = navController,
-                items = listOf(
-                    BottomNavItemData("Home", Icons.Default.Home, RouteDashboardPetugas),
-                    BottomNavItemData("Map", Icons.Default.Map, RouteMapPetugas),
-                    BottomNavItemData("History", Icons.Default.History, RouteHistoryPetugas),
-                    BottomNavItemData("Profile", Icons.Default.AccountCircle, RouteProfilePetugas),
-                ),
+                items = id.ac.umkt.kel_10_mk.projectuas.ui.components.petugasNavItems,
             )
         },
     ) { paddingValues ->
@@ -179,10 +167,10 @@ fun HistoryPetugasScreen(navController: NavHostController, viewModel: ParkingVie
                 }
             }
 
-            if (logs.size >= logsLimit) {
+            if (logs.size >= logsLimit && filteredLogs.isNotEmpty()) {
                 item {
-                    androidx.compose.runtime.LaunchedEffect(Unit) {
-                        viewModel.loadMoreLogs()
+                    androidx.compose.runtime.LaunchedEffect(logsLimit) {
+                        // Tidak ada action karena loadMoreLogs() dipanggil dari tombol
                     }
                     androidx.compose.foundation.layout.Box(
                         modifier = Modifier
@@ -190,10 +178,15 @@ fun HistoryPetugasScreen(navController: NavHostController, viewModel: ParkingVie
                             .padding(vertical = 16.dp),
                         contentAlignment = Alignment.Center
                     ) {
-                        androidx.compose.material3.CircularProgressIndicator(
-                            color = ParkirAccent,
-                            modifier = Modifier.size(24.dp)
-                        )
+                        androidx.compose.material3.OutlinedButton(
+                            onClick = { viewModel.loadMoreLogs() },
+                            colors = androidx.compose.material3.ButtonDefaults.outlinedButtonColors(
+                                contentColor = ParkirAccent
+                            ),
+                            border = BorderStroke(1.dp, ParkirDivider)
+                        ) {
+                            Text("Muat Lebih Banyak")
+                        }
                     }
                 }
             }

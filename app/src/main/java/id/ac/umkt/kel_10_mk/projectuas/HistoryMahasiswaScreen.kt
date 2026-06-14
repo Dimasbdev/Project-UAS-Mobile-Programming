@@ -80,14 +80,18 @@ fun HistoryMahasiswaScreen(navController: NavHostController, viewModel: ParkingV
 
     var selectedFilter by remember { mutableIntStateOf(0) }
     val logs by viewModel.activityLogs.collectAsState()
+    val analyticsLogs by viewModel.analyticsLogs.collectAsState()
     val logsLimit by viewModel.logsLimit.collectAsState()
 
     // derivedStateOf memastikan rekomputasi hanya terjadi ketika logs atau filter benar-benar berubah
     val filteredLogs by remember(logs, selectedFilter) {
         derivedStateOf { filterLogs(logs, selectedFilter) }
     }
-    val chartData by remember(filteredLogs, selectedFilter) {
-        derivedStateOf { buildChartData(filteredLogs, isToday = selectedFilter == 0) }
+    val chartData by remember(analyticsLogs, selectedFilter) {
+        derivedStateOf {
+            val chartFilteredLogs = filterLogs(analyticsLogs, selectedFilter)
+            buildChartData(chartFilteredLogs, isToday = selectedFilter == 0)
+        }
     }
 
     Scaffold(
@@ -129,7 +133,7 @@ fun HistoryMahasiswaScreen(navController: NavHostController, viewModel: ParkingV
                 HistoryAnalyticsCard(
                     chartData = chartData,
                     isToday = selectedFilter == 0,
-                    isEmpty = filteredLogs.isEmpty(),
+                    isEmpty = chartData.isEmpty(),
                 )
             }
 

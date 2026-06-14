@@ -221,6 +221,50 @@ class ParkingRepository {
         awaitClose { listener.remove() }
     }
 
+    // Ambil semua log aktivitas setelah timestamp tertentu untuk kebutuhan analitik/chart
+    fun getLogsAfter(cutoff: Timestamp): Flow<List<ActivityLog>> = callbackFlow {
+        val listener = firestore.collection("parkir_logs")
+            .whereGreaterThanOrEqualTo("timestamp", cutoff)
+            .orderBy("timestamp", Query.Direction.DESCENDING)
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    close(error)
+                    return@addSnapshotListener
+                }
+                val logs = snapshot?.documents?.mapNotNull { doc ->
+                    val areaId = doc.getString("areaId") ?: ""
+                    val areaName = doc.getString("areaName") ?: ""
+                    val statusStr = doc.getString("status") ?: "SEPI"
+                    val status = try {
+                        ParkingStatus.valueOf(statusStr)
+                    } catch (e: Exception) {
+                        ParkingStatus.SEPI
+                    }
+                    val timestamp = doc.getTimestamp("timestamp")
+                    val officerName = doc.getString("officerName") ?: ""
+                    val timeLabel = timestamp?.toDate()?.let { timeFormatter.format(it) } ?: ""
+                    val minutesAgo = timestamp?.let {
+                        val diffMs = System.currentTimeMillis() - it.toDate().time
+                        (diffMs / (1000 * 60)).toInt().coerceAtLeast(0)
+                    } ?: 0
+
+                    ActivityLog(
+                        id = doc.id,
+                        areaId = areaId,
+                        area = areaName,
+                        status = status,
+                        timeLabel = timeLabel,
+                        agoLabel = formatRelativeTime(minutesAgo),
+                        timestamp = timestamp,
+                        officer = officerName,
+                    )
+                } ?: emptyList()
+
+                trySend(logs)
+            }
+        awaitClose { listener.remove() }
+    }
+
     private fun formatRelativeTime(minutesAgo: Int): String {
         return when {
             minutesAgo < 1 -> "baru saja"

@@ -39,34 +39,49 @@ fun buildChartData(logs: List<ActivityLog>, isToday: Boolean): List<ChartDataPoi
 
     return if (isToday) {
         val cal = Calendar.getInstance()
+        val currentHour = cal.get(Calendar.HOUR_OF_DAY)
+        // Hasilkan 7 jam terakhir hingga jam sekarang (misal: jika sekarang jam 18, maka 12, 13, 14, 15, 16, 17, 18)
+        val last7Hours = (0..6).map { offset ->
+            (currentHour - 6 + offset + 24) % 24
+        }
         val grouped = logs.groupBy { log ->
             log.timestamp?.toDate()?.let { cal.time = it }
             cal.get(Calendar.HOUR_OF_DAY)
         }
-        grouped.entries
-            .sortedBy { it.key }
-            .takeLast(7)
-            .map { (hour, hourLogs) ->
+        last7Hours.map { hour ->
+            val hourLogs = grouped[hour]
+            val status = if (hourLogs.isNullOrEmpty()) {
+                ParkingStatus.SEPI
+            } else {
                 val avg = hourLogs.map { it.status.ordinal }.average()
-                val status = ParkingStatus.entries.getOrElse(avg.toInt().coerceIn(0, 2)) { ParkingStatus.SEPI }
-                ChartDataPoint(String.format("%02d", hour), status)
+                ParkingStatus.entries.getOrElse(avg.toInt().coerceIn(0, 2)) { ParkingStatus.SEPI }
             }
+            ChartDataPoint(String.format("%02d", hour), status)
+        }
     } else {
         val fmt = SimpleDateFormat("EEE", Locale("id", "ID"))
         val cal = Calendar.getInstance()
+        // Hasilkan 7 hari terakhir hingga hari ini
+        val last7Days = (0..6).map { offset ->
+            val dayCal = Calendar.getInstance()
+            dayCal.add(Calendar.DAY_OF_YEAR, -6 + offset)
+            val key = dayCal.get(Calendar.YEAR) * 1000 + dayCal.get(Calendar.DAY_OF_YEAR)
+            val label = fmt.format(dayCal.time)
+            key to label
+        }
         val grouped = logs.groupBy { log ->
             log.timestamp?.toDate()?.let { cal.time = it }
-            // Key = tahun * 1000 + hari_dalam_tahun agar tahun berbeda tidak bentrok
             cal.get(Calendar.YEAR) * 1000 + cal.get(Calendar.DAY_OF_YEAR)
         }
-        grouped.entries
-            .sortedBy { it.key }
-            .takeLast(7)
-            .map { (_, dayLogs) ->
+        last7Days.map { (key, label) ->
+            val dayLogs = grouped[key]
+            val status = if (dayLogs.isNullOrEmpty()) {
+                ParkingStatus.SEPI
+            } else {
                 val avg = dayLogs.map { it.status.ordinal }.average()
-                val status = ParkingStatus.entries.getOrElse(avg.toInt().coerceIn(0, 2)) { ParkingStatus.SEPI }
-                val label = dayLogs.first().timestamp?.toDate()?.let { fmt.format(it) } ?: "-"
-                ChartDataPoint(label, status)
+                ParkingStatus.entries.getOrElse(avg.toInt().coerceIn(0, 2)) { ParkingStatus.SEPI }
             }
+            ChartDataPoint(label, status)
+        }
     }
 }

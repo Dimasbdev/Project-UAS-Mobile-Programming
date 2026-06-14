@@ -2,6 +2,7 @@ package id.ac.umkt.kel_10_mk.projectuas
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.google.firebase.Timestamp
 import id.ac.umkt.kel_10_mk.projectuas.models.ActivityLog
 import id.ac.umkt.kel_10_mk.projectuas.models.ParkingArea
 import kotlinx.coroutines.Job
@@ -12,6 +13,7 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
+import java.util.Calendar
 
 class ParkingViewModel(
     private val repository: ParkingRepository = ParkingRepository(),
@@ -30,6 +32,9 @@ class ParkingViewModel(
     private val _activityLogs = MutableStateFlow<List<ActivityLog>>(emptyList())
     val activityLogs: StateFlow<List<ActivityLog>> = _activityLogs.asStateFlow()
 
+    private val _analyticsLogs = MutableStateFlow<List<ActivityLog>>(emptyList())
+    val analyticsLogs: StateFlow<List<ActivityLog>> = _analyticsLogs.asStateFlow()
+
     private val _uiEvent = MutableSharedFlow<String>()
     val uiEvent = _uiEvent.asSharedFlow()
 
@@ -41,6 +46,7 @@ class ParkingViewModel(
     init {
         observeParkingAreas()
         observeActivityLogs()
+        observeAnalyticsLogs()
     }
 
     private fun observeActivityLogs() {
@@ -52,6 +58,21 @@ class ParkingViewModel(
                 }
                 .collect { logs ->
                     _activityLogs.value = logs
+                }
+        }
+    }
+
+    private fun observeAnalyticsLogs() {
+        val cal = Calendar.getInstance()
+        cal.add(Calendar.DAY_OF_YEAR, -7)
+        val cutoff = Timestamp(cal.time)
+        viewModelScope.launch {
+            repository.getLogsAfter(cutoff)
+                .catch {
+                    _analyticsLogs.value = emptyList()
+                }
+                .collect { logs ->
+                    _analyticsLogs.value = logs
                 }
         }
     }

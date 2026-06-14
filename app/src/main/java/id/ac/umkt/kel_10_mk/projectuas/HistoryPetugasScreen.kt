@@ -62,13 +62,17 @@ fun HistoryPetugasScreen(navController: NavHostController, viewModel: ParkingVie
 
     var selectedFilter by remember { mutableIntStateOf(0) }
     val logs by viewModel.activityLogs.collectAsState()
+    val analyticsLogs by viewModel.analyticsLogs.collectAsState()
     val logsLimit by viewModel.logsLimit.collectAsState()
 
     val filteredLogs by remember(logs, selectedFilter) {
         derivedStateOf { filterLogs(logs, selectedFilter) }
     }
-    val chartData by remember(filteredLogs, selectedFilter) {
-        derivedStateOf { buildChartData(filteredLogs, isToday = selectedFilter == 0) }
+    val chartData by remember(analyticsLogs, selectedFilter) {
+        derivedStateOf {
+            val chartFilteredLogs = filterLogs(analyticsLogs, selectedFilter)
+            buildChartData(chartFilteredLogs, isToday = selectedFilter == 0)
+        }
     }
 
     val exportLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
@@ -78,9 +82,10 @@ fun HistoryPetugasScreen(navController: NavHostController, viewModel: ParkingVie
             try {
                 context.contentResolver.openOutputStream(uri)?.use { outputStream ->
                     val writer = outputStream.bufferedWriter()
-                    writer.write("Waktu,Area,Status\n")
-                    filteredLogs.forEach { log ->
-                        writer.write("${log.timeLabel},${log.area},${log.status.name}\n")
+                    writer.write("Waktu,Area,Status,Petugas\n")
+                    val logsToExport = filterLogs(analyticsLogs, selectedFilter)
+                    logsToExport.forEach { log ->
+                        writer.write("${log.timeLabel},${log.area},${log.status.name},${log.officer ?: ""}\n")
                     }
                     writer.flush()
                 }
@@ -138,7 +143,7 @@ fun HistoryPetugasScreen(navController: NavHostController, viewModel: ParkingVie
                 HistoryAnalyticsCard(
                     chartData = chartData,
                     isToday = selectedFilter == 0,
-                    isEmpty = filteredLogs.isEmpty(),
+                    isEmpty = chartData.isEmpty(),
                 )
             }
 

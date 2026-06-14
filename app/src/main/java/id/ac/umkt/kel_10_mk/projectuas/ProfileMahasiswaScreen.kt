@@ -24,7 +24,7 @@ import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.ArrowForwardIos
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Info
+
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Logout
 import androidx.compose.material.icons.filled.Map
@@ -103,12 +103,6 @@ fun ProfileMahasiswaScreen(
             Icons.Default.LocationOn,
             ParkirAccent,
             onClick = { navController.navigate(RouteLocationPermissionMahasiswa) },
-        ),
-        ProfileMenuItem(
-            "Info Kampus",
-            Icons.Default.Info,
-            ParkirAccent,
-            onClick = { },
         ),
     )
 

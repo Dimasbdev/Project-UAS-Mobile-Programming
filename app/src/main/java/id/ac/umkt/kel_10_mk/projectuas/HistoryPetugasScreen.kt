@@ -179,10 +179,10 @@ fun HistoryPetugasScreen(navController: NavHostController, viewModel: ParkingVie
                 }
             }
 
-            if (logs.size >= logsLimit) {
+            if (logs.size >= logsLimit && filteredLogs.isNotEmpty()) {
                 item {
-                    androidx.compose.runtime.LaunchedEffect(Unit) {
-                        viewModel.loadMoreLogs()
+                    androidx.compose.runtime.LaunchedEffect(logsLimit) {
+                        // Tidak ada action karena loadMoreLogs() dipanggil dari tombol
                     }
                     androidx.compose.foundation.layout.Box(
                         modifier = Modifier
@@ -190,10 +190,15 @@ fun HistoryPetugasScreen(navController: NavHostController, viewModel: ParkingVie
                             .padding(vertical = 16.dp),
                         contentAlignment = Alignment.Center
                     ) {
-                        androidx.compose.material3.CircularProgressIndicator(
-                            color = ParkirAccent,
-                            modifier = Modifier.size(24.dp)
-                        )
+                        androidx.compose.material3.OutlinedButton(
+                            onClick = { viewModel.loadMoreLogs() },
+                            colors = androidx.compose.material3.ButtonDefaults.outlinedButtonColors(
+                                contentColor = ParkirAccent
+                            ),
+                            border = BorderStroke(1.dp, ParkirDivider)
+                        ) {
+                            Text("Muat Lebih Banyak")
+                        }
                     }
                 }
             }

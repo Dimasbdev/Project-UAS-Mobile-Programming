@@ -19,6 +19,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -31,9 +32,11 @@ import id.ac.umkt.kel_10_mk.projectuas.ui.theme.SpaceGroteskFamily
 @Composable
 fun AppNavigation(
     navController: NavHostController = rememberNavController(),
-    authViewModel: AuthViewModel = viewModel(),
-    parkingViewModel: ParkingViewModel = viewModel(),
+    factory: ViewModelProvider.Factory? = null,
 ) {
+    val authViewModel: AuthViewModel = if (factory != null) viewModel(factory = factory) else viewModel()
+    val parkingViewModel: ParkingViewModel = if (factory != null) viewModel(factory = factory) else viewModel()
+
     val context = LocalContext.current
 
 
@@ -50,6 +53,16 @@ fun AppNavigation(
                 Toast.makeText(context, state.message, Toast.LENGTH_LONG).show()
             }
             else -> {}
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        authViewModel.navigationEvent.collect { route ->
+            navController.navigate(route) {
+                if (route == RouteDashboardMahasiswa || route == RouteDashboardPetugas) {
+                    popUpTo(RouteLogin) { inclusive = true }
+                }
+            }
         }
     }
 
@@ -81,16 +94,6 @@ fun AppNavigation(
             }
         }
     } else {
-        LaunchedEffect(Unit) {
-            authViewModel.navigationEvent.collect { route ->
-                navController.navigate(route) {
-                    if (route == RouteDashboardMahasiswa || route == RouteDashboardPetugas) {
-                        popUpTo(RouteLogin) { inclusive = true }
-                    }
-                }
-            }
-        }
-
         NavHost(
             navController = navController,
             startDestination = RouteLogin,

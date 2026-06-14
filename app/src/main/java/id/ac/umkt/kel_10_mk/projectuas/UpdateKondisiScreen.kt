@@ -140,19 +140,17 @@ fun UpdateKondisiScreen(
         )
     }
 
-    val textFieldColors = remember {
-        OutlinedTextFieldDefaults.colors(
-            focusedBorderColor = ParkirAccent,
-            unfocusedBorderColor = ParkirDivider,
-            focusedTextColor = ParkirTextPrimary,
-            unfocusedTextColor = ParkirTextPrimary,
-            focusedLabelColor = ParkirAccent,
-            unfocusedLabelColor = ParkirTextSecondary,
-            cursorColor = ParkirAccent,
-            focusedContainerColor = ParkirBackground,
-            unfocusedContainerColor = ParkirBackground,
-        )
-    }
+    val textFieldColors = OutlinedTextFieldDefaults.colors(
+        focusedBorderColor = ParkirAccent,
+        unfocusedBorderColor = ParkirDivider,
+        focusedTextColor = ParkirTextPrimary,
+        unfocusedTextColor = ParkirTextPrimary,
+        focusedLabelColor = ParkirAccent,
+        unfocusedLabelColor = ParkirTextSecondary,
+        cursorColor = ParkirAccent,
+        focusedContainerColor = ParkirBackground,
+        unfocusedContainerColor = ParkirBackground,
+    )
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),

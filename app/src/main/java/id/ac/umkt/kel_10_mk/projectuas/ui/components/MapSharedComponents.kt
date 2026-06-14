@@ -31,7 +31,7 @@ import com.google.maps.android.compose.MapUiSettings
 import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.rememberCameraPositionState
-import id.ac.umkt.kel_10_mk.projectuas.MapStyle
+import id.ac.umkt.kel_10_mk.projectuas.ui.theme.MapStyle
 import id.ac.umkt.kel_10_mk.projectuas.ParkingStatus
 import id.ac.umkt.kel_10_mk.projectuas.models.ParkingArea
 import id.ac.umkt.kel_10_mk.projectuas.ui.theme.*

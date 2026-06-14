@@ -43,7 +43,11 @@ import id.ac.umkt.kel_10_mk.projectuas.ui.theme.ParkirInactive
 import id.ac.umkt.kel_10_mk.projectuas.ui.theme.ParkirChipSurface
 import id.ac.umkt.kel_10_mk.projectuas.ui.theme.ParkirSurface
 import id.ac.umkt.kel_10_mk.projectuas.ui.theme.ParkirTextPrimary
+import id.ac.umkt.kel_10_mk.projectuas.ui.theme.ParkirTextSecondary
+import id.ac.umkt.kel_10_mk.projectuas.ui.theme.ParkirWarning
+import id.ac.umkt.kel_10_mk.projectuas.ui.theme.ParkirDanger
 import id.ac.umkt.kel_10_mk.projectuas.ui.theme.SpaceGroteskFamily
+import androidx.compose.ui.graphics.toArgb
 
 @Composable
 fun ParkirTopBar(
@@ -341,7 +345,6 @@ private fun StatusSummaryChip(label: String, color: Color) {
             color = color,
             fontWeight = FontWeight.SemiBold,
             fontSize = 13.sp,
-        )
         )
     }
 }

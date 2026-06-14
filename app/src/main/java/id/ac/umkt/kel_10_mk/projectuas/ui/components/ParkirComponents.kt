@@ -23,6 +23,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Map
+import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
@@ -88,6 +92,20 @@ data class BottomNavItemData(
     val label: String,
     val icon: ImageVector,
     val route: String,
+)
+
+val mahasiswaNavItems = listOf(
+    BottomNavItemData("Home", androidx.compose.material.icons.Icons.Default.Home, id.ac.umkt.kel_10_mk.projectuas.RouteDashboardMahasiswa),
+    BottomNavItemData("Map", androidx.compose.material.icons.Icons.Default.Map, id.ac.umkt.kel_10_mk.projectuas.RouteMapMahasiswa),
+    BottomNavItemData("History", androidx.compose.material.icons.Icons.Default.History, id.ac.umkt.kel_10_mk.projectuas.RouteHistoryMahasiswa),
+    BottomNavItemData("Profile", androidx.compose.material.icons.Icons.Default.AccountCircle, id.ac.umkt.kel_10_mk.projectuas.RouteProfileMahasiswa),
+)
+
+val petugasNavItems = listOf(
+    BottomNavItemData("Home", androidx.compose.material.icons.Icons.Default.Home, id.ac.umkt.kel_10_mk.projectuas.RouteDashboardPetugas),
+    BottomNavItemData("Map", androidx.compose.material.icons.Icons.Default.Map, id.ac.umkt.kel_10_mk.projectuas.RouteMapPetugas),
+    BottomNavItemData("History", androidx.compose.material.icons.Icons.Default.History, id.ac.umkt.kel_10_mk.projectuas.RouteHistoryPetugas),
+    BottomNavItemData("Profile", androidx.compose.material.icons.Icons.Default.AccountCircle, id.ac.umkt.kel_10_mk.projectuas.RouteProfilePetugas),
 )
 
 @Composable

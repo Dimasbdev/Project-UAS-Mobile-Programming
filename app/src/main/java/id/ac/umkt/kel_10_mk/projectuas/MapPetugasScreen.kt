@@ -23,7 +23,9 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
-import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.Notifications
+import id.ac.umkt.kel_10_mk.projectuas.ui.components.ParkingGoogleMap
+import id.ac.umkt.kel_10_mk.projectuas.ui.components.ParkingLegendRow
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Map
 import androidx.compose.material3.Scaffold
@@ -31,6 +33,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -82,7 +85,7 @@ fun MapPetugasScreen(navController: NavHostController, parkingViewModel: Parking
         }
     }
 
-    val parkingAreas by parkingViewModel.parkingAreas.collectAsState()
+    val parkingAreas by parkingViewModel.parkingAreas.collectAsStateWithLifecycle()
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -90,12 +93,7 @@ fun MapPetugasScreen(navController: NavHostController, parkingViewModel: Parking
         bottomBar = {
             ParkirBottomNavBar(
                 navController = navController,
-                items = listOf(
-                    BottomNavItemData("Home", Icons.Default.Home, RouteDashboardPetugas),
-                    BottomNavItemData("Map", Icons.Default.Map, RouteMapPetugas),
-                    BottomNavItemData("History", Icons.Default.History, RouteHistoryPetugas),
-                    BottomNavItemData("Profile", Icons.Default.AccountCircle, RouteProfilePetugas),
-                ),
+                items = id.ac.umkt.kel_10_mk.projectuas.ui.components.petugasNavItems,
             )
         },
     ) { paddingValues ->
@@ -124,9 +122,8 @@ fun MapPetugasScreen(navController: NavHostController, parkingViewModel: Parking
                 fontSize = 13.sp,
             )
 
-            GoogleMapContainer(parkingAreas = parkingAreas)
-
-            LegendRow()
+            ParkingGoogleMap(parkingAreas = parkingAreas)
+            ParkingLegendRow()
 
             LazyColumn(
                 modifier = Modifier.fillMaxWidth().weight(1f),
@@ -143,119 +140,7 @@ fun MapPetugasScreen(navController: NavHostController, parkingViewModel: Parking
     }
 }
 
-@Composable
-private fun GoogleMapContainer(parkingAreas: List<ParkingArea>) {
-    val context = androidx.compose.ui.platform.LocalContext.current
-    val hasPermission = remember {
-        ContextCompat.checkSelfPermission(
-            context,
-            Manifest.permission.ACCESS_FINE_LOCATION
-        ) == PackageManager.PERMISSION_GRANTED ||
-        ContextCompat.checkSelfPermission(
-            context,
-            Manifest.permission.ACCESS_COARSE_LOCATION
-        ) == PackageManager.PERMISSION_GRANTED
-    }
 
-    val umktCenter = LatLng(-0.4822, 117.1508)
-    val cameraPositionState = rememberCameraPositionState {
-        position = CameraPosition.fromLatLngZoom(umktCenter, 16.5f)
-    }
-
-    val mapProperties = remember(hasPermission) {
-        MapProperties(
-            mapStyleOptions = MapStyleOptions(MapStyle.json),
-            isMyLocationEnabled = hasPermission
-        )
-    }
-
-    val mapUiSettings = remember(hasPermission) {
-        MapUiSettings(
-            zoomControlsEnabled = false,
-            mapToolbarEnabled = false,
-            myLocationButtonEnabled = hasPermission
-        )
-    }
-
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(320.dp)
-            .clip(RoundedCornerShape(16.dp))
-            .border(BorderStroke(1.dp, ParkirDivider), RoundedCornerShape(16.dp))
-            .background(ParkirMapSurface)
-    ) {
-        GoogleMap(
-            modifier = Modifier.fillMaxSize(),
-            cameraPositionState = cameraPositionState,
-            properties = mapProperties,
-            uiSettings = mapUiSettings
-        ) {
-            parkingAreas.forEach { area ->
-                val position = getLatLngForArea(area.id)
-                val markerHue = when (area.status) {
-                    ParkingStatus.SEPI -> BitmapDescriptorFactory.HUE_CYAN
-                    ParkingStatus.SEDANG -> BitmapDescriptorFactory.HUE_ORANGE
-                    ParkingStatus.PENUH -> BitmapDescriptorFactory.HUE_RED
-                }
-                val markerState = remember(area.id) { MarkerState(position = position) }
-                Marker(
-                    state = markerState,
-                    title = area.name,
-                    snippet = "${area.location} - Status: ${area.status.name}",
-                    icon = BitmapDescriptorFactory.defaultMarker(markerHue)
-                )
-            }
-        }
-    }
-}
-
-private fun getLatLngForArea(areaId: String): LatLng {
-    return when (areaId) {
-        "parkiran_a" -> LatLng(-0.482065, 117.150493)
-        "parkiran_b" -> LatLng(-0.482500, 117.150850)
-        "parkiran_c" -> LatLng(-0.482900, 117.151150)
-        "parkiran_d" -> LatLng(-0.481800, 117.151300)
-        else -> LatLng(-0.4822, 117.1508)
-    }
-}
-
-@Composable
-private fun LegendRow() {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(ParkirSurface, RoundedCornerShape(14.dp))
-            .border(BorderStroke(1.dp, ParkirDivider), RoundedCornerShape(14.dp))
-            .padding(horizontal = 14.dp, vertical = 12.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        LegendItem(label = "SEPI", color = ParkirAccent)
-        LegendItem(label = "SEDANG", color = ParkirWarning)
-        LegendItem(label = "PENUH", color = ParkirDanger)
-    }
-}
-
-@Composable
-private fun LegendItem(label: String, color: androidx.compose.ui.graphics.Color) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(6.dp),
-    ) {
-        Box(
-            modifier = Modifier
-                .size(8.dp)
-                .background(color, CircleShape),
-        )
-        Text(
-            text = label,
-            color = ParkirTextSecondary,
-            fontSize = 11.sp,
-            letterSpacing = 0.8.sp,
-        )
-    }
-}
 
 @Composable
 private fun MarkerRow(area: ParkingArea) {

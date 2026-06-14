@@ -112,12 +112,7 @@ fun ProfileMahasiswaScreen(
         bottomBar = {
             ParkirBottomNavBar(
                 navController = navController,
-                items = listOf(
-                    BottomNavItemData("Home", Icons.Default.Home, RouteDashboardMahasiswa),
-                    BottomNavItemData("Map", Icons.Default.Map, RouteMapMahasiswa),
-                    BottomNavItemData("History", Icons.Default.History, RouteHistoryMahasiswa),
-                    BottomNavItemData("Profile", Icons.Default.AccountCircle, RouteProfileMahasiswa),
-                ),
+                items = id.ac.umkt.kel_10_mk.projectuas.ui.components.mahasiswaNavItems,
             )
         },
     ) { paddingValues ->

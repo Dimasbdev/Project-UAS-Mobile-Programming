@@ -29,6 +29,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -59,15 +60,26 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import java.util.TimeZone
+import kotlinx.coroutines.delay
 
-fun formatCurrentWitaTime(): String {
-    return try {
-        val sdf = SimpleDateFormat("HH:mm 'WITA' - EEEE, dd MMMM yyyy", Locale("id", "ID"))
-        sdf.timeZone = TimeZone.getTimeZone("GMT+8")
-        sdf.format(Date())
-    } catch (e: Exception) {
-        "08:00 WITA"
-    }
+private val witaFormatter = SimpleDateFormat("HH:mm 'WITA' - EEEE, dd MMMM yyyy", Locale("id", "ID")).apply {
+    timeZone = TimeZone.getTimeZone("GMT+8")
+}
+
+fun formatCurrentWitaTime(): String = try {
+    witaFormatter.format(Date())
+} catch (e: Exception) {
+    "08:00 WITA"
+}
+
+@Composable
+fun rememberWitaTime(): String {
+    return androidx.compose.runtime.produceState(initialValue = formatCurrentWitaTime()) {
+        while (true) {
+            delay(60_000L) // update setiap menit
+            value = formatCurrentWitaTime()
+        }
+    }.value
 }
 
 @Composable
@@ -86,7 +98,7 @@ fun DashboardMahasiswaScreen(
         }
     }
 
-    val areas by parkingViewModel.parkingAreas.collectAsState()
+    val areas by parkingViewModel.parkingAreas.collectAsStateWithLifecycle()
     val summary = remember(areas) {
         areas.groupBy { it.status }.mapValues { it.value.size }
     }
@@ -97,12 +109,7 @@ fun DashboardMahasiswaScreen(
         bottomBar = {
             ParkirBottomNavBar(
                 navController = navController,
-                items = listOf(
-                    BottomNavItemData("Home", Icons.Default.Home, RouteDashboardMahasiswa),
-                    BottomNavItemData("Map", Icons.Default.Map, RouteMapMahasiswa),
-                    BottomNavItemData("History", Icons.Default.History, RouteHistoryMahasiswa),
-                    BottomNavItemData("Profile", Icons.Default.AccountCircle, RouteProfileMahasiswa),
-                ),
+                items = id.ac.umkt.kel_10_mk.projectuas.ui.components.mahasiswaNavItems,
             )
         },
     ) { paddingValues ->

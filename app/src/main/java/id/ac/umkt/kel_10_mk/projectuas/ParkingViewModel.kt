@@ -9,9 +9,12 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.util.Calendar
 
@@ -29,9 +32,6 @@ class ParkingViewModel(
     private val _currentArea = MutableStateFlow<ParkingArea?>(null)
     val currentArea: StateFlow<ParkingArea?> = _currentArea.asStateFlow()
 
-    private val _activityLogs = MutableStateFlow<List<ActivityLog>>(emptyList())
-    val activityLogs: StateFlow<List<ActivityLog>> = _activityLogs.asStateFlow()
-
     private val _analyticsLogs = MutableStateFlow<List<ActivityLog>>(emptyList())
     val analyticsLogs: StateFlow<List<ActivityLog>> = _analyticsLogs.asStateFlow()
 
@@ -41,25 +41,18 @@ class ParkingViewModel(
     private val _logsLimit = MutableStateFlow(50)
     val logsLimit: StateFlow<Int> = _logsLimit.asStateFlow()
 
-    private var logsJob: Job? = null
+    val activityLogs: StateFlow<List<ActivityLog>> = _logsLimit
+        .flatMapLatest { limit -> repository.getActivityLogs(limit) }
+        .catch { emit(emptyList()) }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = emptyList()
+        )
 
     init {
         observeParkingAreas()
-        observeActivityLogs()
         observeAnalyticsLogs()
-    }
-
-    private fun observeActivityLogs() {
-        logsJob?.cancel()
-        logsJob = viewModelScope.launch {
-            repository.getActivityLogs(_logsLimit.value)
-                .catch {
-                    _activityLogs.value = emptyList()
-                }
-                .collect { logs ->
-                    _activityLogs.value = logs
-                }
-        }
     }
 
     private fun observeAnalyticsLogs() {
@@ -79,7 +72,6 @@ class ParkingViewModel(
 
     fun loadMoreLogs() {
         _logsLimit.value += 50
-        observeActivityLogs()
     }
 
     private fun observeParkingAreas() {

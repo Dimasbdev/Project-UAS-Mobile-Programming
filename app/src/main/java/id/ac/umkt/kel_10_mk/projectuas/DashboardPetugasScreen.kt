@@ -32,6 +32,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -77,7 +78,7 @@ fun DashboardPetugasScreen(
         }
     }
 
-    val areas by parkingViewModel.parkingAreas.collectAsState()
+    val areas by parkingViewModel.parkingAreas.collectAsStateWithLifecycle()
     val summary = remember(areas) {
         areas.groupBy { it.status }.mapValues { it.value.size }
     }
@@ -88,12 +89,7 @@ fun DashboardPetugasScreen(
         bottomBar = {
             ParkirBottomNavBar(
                 navController = navController,
-                items = listOf(
-                    BottomNavItemData("Home", Icons.Default.Home, RouteDashboardPetugas),
-                    BottomNavItemData("Map", Icons.Default.Map, RouteMapPetugas),
-                    BottomNavItemData("History", Icons.Default.History, RouteHistoryPetugas),
-                    BottomNavItemData("Profile", Icons.Default.AccountCircle, RouteProfilePetugas),
-                ),
+                items = id.ac.umkt.kel_10_mk.projectuas.ui.components.petugasNavItems,
             )
         },
     ) { paddingValues ->
@@ -146,7 +142,7 @@ private fun PetugasHeader(officerName: String) {
             fontWeight = FontWeight.SemiBold,
             fontSize = 24.sp,
         )
-        val witaTime = remember { formatCurrentWitaTime() }
+        val witaTime = rememberWitaTime()
         Text(
             text = witaTime,
             color = ParkirTextSecondary,

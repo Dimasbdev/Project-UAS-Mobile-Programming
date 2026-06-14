@@ -90,12 +90,7 @@ fun ProfilePetugasScreen(
         bottomBar = {
             ParkirBottomNavBar(
                 navController = navController,
-                items = listOf(
-                    BottomNavItemData("Home", Icons.Default.Home, RouteDashboardPetugas),
-                    BottomNavItemData("Map", Icons.Default.Map, RouteMapPetugas),
-                    BottomNavItemData("History", Icons.Default.History, RouteHistoryPetugas),
-                    BottomNavItemData("Profile", Icons.Default.AccountCircle, RouteProfilePetugas),
-                ),
+                items = id.ac.umkt.kel_10_mk.projectuas.ui.components.petugasNavItems,
             )
         },
     ) { paddingValues ->

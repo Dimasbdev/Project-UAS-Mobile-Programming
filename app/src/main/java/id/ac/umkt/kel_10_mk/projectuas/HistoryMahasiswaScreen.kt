@@ -30,6 +30,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -79,9 +80,9 @@ fun HistoryMahasiswaScreen(navController: NavHostController, viewModel: ParkingV
     }
 
     var selectedFilter by remember { mutableIntStateOf(0) }
-    val logs by viewModel.activityLogs.collectAsState()
-    val analyticsLogs by viewModel.analyticsLogs.collectAsState()
-    val logsLimit by viewModel.logsLimit.collectAsState()
+    val logs by viewModel.activityLogs.collectAsStateWithLifecycle()
+    val analyticsLogs by viewModel.analyticsLogs.collectAsStateWithLifecycle()
+    val logsLimit by viewModel.logsLimit.collectAsStateWithLifecycle()
 
     // derivedStateOf memastikan rekomputasi hanya terjadi ketika logs atau filter benar-benar berubah
     val filteredLogs by remember(logs, selectedFilter) {
@@ -106,12 +107,7 @@ fun HistoryMahasiswaScreen(navController: NavHostController, viewModel: ParkingV
         bottomBar = {
             ParkirBottomNavBar(
                 navController = navController,
-                items = listOf(
-                    BottomNavItemData("Home", Icons.Default.Home, RouteDashboardMahasiswa),
-                    BottomNavItemData("Map", Icons.Default.Map, RouteMapMahasiswa),
-                    BottomNavItemData("History", Icons.Default.History, RouteHistoryMahasiswa),
-                    BottomNavItemData("Profile", Icons.Default.AccountCircle, RouteProfileMahasiswa),
-                ),
+                items = id.ac.umkt.kel_10_mk.projectuas.ui.components.mahasiswaNavItems,
             )
         },
     ) { paddingValues ->

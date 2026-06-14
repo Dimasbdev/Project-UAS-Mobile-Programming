@@ -85,3 +85,34 @@ fun buildChartData(logs: List<ActivityLog>, isToday: Boolean): List<ChartDataPoi
         }
     }
 }
+
+/**
+ * Mengelompokkan log aktivitas berdasarkan tanggal untuk keperluan header pada UI.
+ * Format: "Hari Ini - 14 Juni 2026", "Kemarin - 13 Juni 2026", dll.
+ */
+fun groupLogsByDate(logs: List<ActivityLog>): Map<String, List<ActivityLog>> {
+    val fmt = SimpleDateFormat("EEEE, dd MMMM yyyy", Locale("id", "ID"))
+    val calToday = Calendar.getInstance()
+    val calYesterday = Calendar.getInstance().apply { add(Calendar.DAY_OF_YEAR, -1) }
+    
+    // Pastikan log sudah berurutan dari yang terbaru
+    val sortedLogs = logs.sortedByDescending { it.timestamp?.toDate()?.time ?: 0L }
+    
+    // Gunakan LinkedHashMap (default dari groupBy) untuk menjaga urutan hari dari yang terbaru
+    return sortedLogs.groupBy { log ->
+        val logDate = log.timestamp?.toDate() ?: return@groupBy "Waktu Tidak Diketahui"
+        val logCal = Calendar.getInstance().apply { time = logDate }
+        
+        val isToday = logCal.get(Calendar.YEAR) == calToday.get(Calendar.YEAR) &&
+                      logCal.get(Calendar.DAY_OF_YEAR) == calToday.get(Calendar.DAY_OF_YEAR)
+                      
+        val isYesterday = logCal.get(Calendar.YEAR) == calYesterday.get(Calendar.YEAR) &&
+                          logCal.get(Calendar.DAY_OF_YEAR) == calYesterday.get(Calendar.DAY_OF_YEAR)
+                          
+        when {
+            isToday -> "Hari Ini - ${fmt.format(logDate)}"
+            isYesterday -> "Kemarin - ${fmt.format(logDate)}"
+            else -> fmt.format(logDate)
+        }
+    }
+}

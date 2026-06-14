@@ -68,6 +68,12 @@ fun HistoryPetugasScreen(navController: NavHostController, viewModel: ParkingVie
     val filteredLogs by remember(logs, selectedFilter) {
         derivedStateOf { filterLogs(logs, selectedFilter) }
     }
+    val groupedLogs by remember(filteredLogs) {
+        derivedStateOf { 
+            val limited = if (selectedFilter == 1) filteredLogs.take(100) else filteredLogs
+            groupLogsByDate(limited) 
+        }
+    }
     val chartData by remember(analyticsLogs, selectedFilter) {
         derivedStateOf {
             val chartFilteredLogs = filterLogs(analyticsLogs, selectedFilter)
@@ -157,8 +163,20 @@ fun HistoryPetugasScreen(navController: NavHostController, viewModel: ParkingVie
                 )
             }
 
-            items(filteredLogs, key = { it.id }) { log ->
-                HistoryActivityLogCard(log = log)
+            groupedLogs.forEach { (dateHeader, logsForDate) ->
+                item {
+                    Text(
+                        text = dateHeader,
+                        color = ParkirTextSecondary,
+                        fontFamily = SpaceGroteskFamily,
+                        fontWeight = FontWeight.Medium,
+                        fontSize = 13.sp,
+                        modifier = Modifier.padding(top = 8.dp, bottom = 4.dp)
+                    )
+                }
+                items(logsForDate, key = { it.id }) { log ->
+                    HistoryActivityLogCard(log = log)
+                }
             }
 
             if (logs.size >= logsLimit) {

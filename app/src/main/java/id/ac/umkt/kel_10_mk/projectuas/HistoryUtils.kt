@@ -2,9 +2,14 @@ package id.ac.umkt.kel_10_mk.projectuas
 
 import id.ac.umkt.kel_10_mk.projectuas.models.ActivityLog
 import id.ac.umkt.kel_10_mk.projectuas.ui.components.ChartDataPoint
-import java.text.SimpleDateFormat
-import java.util.Calendar
+import java.time.Instant
+import java.time.ZoneId
+import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
+import java.time.temporal.ChronoUnit
 import java.util.Locale
+
+private val ZONE_ID = ZoneId.of("Asia/Makassar")
 
 /**
  * Memfilter log berdasarkan indeks filter:
@@ -12,18 +17,14 @@ import java.util.Locale
  * - 1 = 7 Hari Terakhir
  */
 fun filterLogs(logs: List<ActivityLog>, filterIndex: Int): List<ActivityLog> {
-    val cal = Calendar.getInstance()
-    if (filterIndex == 0) {
-        cal.set(Calendar.HOUR_OF_DAY, 0)
-        cal.set(Calendar.MINUTE, 0)
-        cal.set(Calendar.SECOND, 0)
-        cal.set(Calendar.MILLISECOND, 0)
+    val now = ZonedDateTime.now(ZONE_ID)
+    val cutoff = if (filterIndex == 0) {
+        now.truncatedTo(ChronoUnit.DAYS).toInstant().toEpochMilli()
     } else {
-        cal.add(Calendar.DAY_OF_YEAR, -7)
+        now.minusDays(7).toInstant().toEpochMilli()
     }
-    val cutoff = cal.timeInMillis
     return logs.filter { log ->
-        val ts = log.timestamp?.toDate()?.time ?: return@filter false
+        val ts = log.timestampMs ?: return@filter false
         ts >= cutoff
     }
 }
@@ -37,16 +38,16 @@ fun filterLogs(logs: List<ActivityLog>, filterIndex: Int): List<ActivityLog> {
 fun buildChartData(logs: List<ActivityLog>, isToday: Boolean): List<ChartDataPoint> {
     if (logs.isEmpty()) return emptyList()
 
+    val now = ZonedDateTime.now(ZONE_ID)
+
     return if (isToday) {
-        val cal = Calendar.getInstance()
-        val currentHour = cal.get(Calendar.HOUR_OF_DAY)
-        // Hasilkan 7 jam terakhir hingga jam sekarang (misal: jika sekarang jam 18, maka 12, 13, 14, 15, 16, 17, 18)
+        val currentHour = now.hour
         val last7Hours = (0..6).map { offset ->
             (currentHour - 6 + offset + 24) % 24
         }
         val grouped = logs.groupBy { log ->
-            log.timestamp?.toDate()?.let { cal.time = it }
-            cal.get(Calendar.HOUR_OF_DAY)
+            val ms = log.timestampMs ?: return@groupBy -1
+            Instant.ofEpochMilli(ms).atZone(ZONE_ID).hour
         }
         last7Hours.map { hour ->
             val hourLogs = grouped[hour]
@@ -59,19 +60,17 @@ fun buildChartData(logs: List<ActivityLog>, isToday: Boolean): List<ChartDataPoi
             ChartDataPoint(String.format("%02d", hour), status)
         }
     } else {
-        val fmt = SimpleDateFormat("EEE", Locale("id", "ID"))
-        val cal = Calendar.getInstance()
-        // Hasilkan 7 hari terakhir hingga hari ini
+        val fmt = DateTimeFormatter.ofPattern("EEE", Locale("id", "ID"))
         val last7Days = (0..6).map { offset ->
-            val dayCal = Calendar.getInstance()
-            dayCal.add(Calendar.DAY_OF_YEAR, -6 + offset)
-            val key = dayCal.get(Calendar.YEAR) * 1000 + dayCal.get(Calendar.DAY_OF_YEAR)
-            val label = fmt.format(dayCal.time)
+            val dayDate = now.minusDays((6 - offset).toLong())
+            val key = dayDate.year * 1000 + dayDate.dayOfYear
+            val label = dayDate.format(fmt)
             key to label
         }
         val grouped = logs.groupBy { log ->
-            log.timestamp?.toDate()?.let { cal.time = it }
-            cal.get(Calendar.YEAR) * 1000 + cal.get(Calendar.DAY_OF_YEAR)
+            val ms = log.timestampMs ?: return@groupBy -1
+            val zdt = Instant.ofEpochMilli(ms).atZone(ZONE_ID)
+            zdt.year * 1000 + zdt.dayOfYear
         }
         last7Days.map { (key, label) ->
             val dayLogs = grouped[key]
@@ -91,28 +90,23 @@ fun buildChartData(logs: List<ActivityLog>, isToday: Boolean): List<ChartDataPoi
  * Format: "Hari Ini - 14 Juni 2026", "Kemarin - 13 Juni 2026", dll.
  */
 fun groupLogsByDate(logs: List<ActivityLog>): Map<String, List<ActivityLog>> {
-    val fmt = SimpleDateFormat("EEEE, dd MMMM yyyy", Locale("id", "ID"))
-    val calToday = Calendar.getInstance()
-    val calYesterday = Calendar.getInstance().apply { add(Calendar.DAY_OF_YEAR, -1) }
+    val fmt = DateTimeFormatter.ofPattern("EEEE, dd MMMM yyyy", Locale("id", "ID"))
+    val now = ZonedDateTime.now(ZONE_ID)
+    val todayKey = now.year * 1000 + now.dayOfYear
+    val yesterday = now.minusDays(1)
+    val yesterdayKey = yesterday.year * 1000 + yesterday.dayOfYear
     
-    // Pastikan log sudah berurutan dari yang terbaru
-    val sortedLogs = logs.sortedByDescending { it.timestamp?.toDate()?.time ?: 0L }
+    val sortedLogs = logs.sortedByDescending { it.timestampMs ?: 0L }
     
-    // Gunakan LinkedHashMap (default dari groupBy) untuk menjaga urutan hari dari yang terbaru
     return sortedLogs.groupBy { log ->
-        val logDate = log.timestamp?.toDate() ?: return@groupBy "Waktu Tidak Diketahui"
-        val logCal = Calendar.getInstance().apply { time = logDate }
+        val ms = log.timestampMs ?: return@groupBy "Waktu Tidak Diketahui"
+        val zdt = Instant.ofEpochMilli(ms).atZone(ZONE_ID)
+        val key = zdt.year * 1000 + zdt.dayOfYear
         
-        val isToday = logCal.get(Calendar.YEAR) == calToday.get(Calendar.YEAR) &&
-                      logCal.get(Calendar.DAY_OF_YEAR) == calToday.get(Calendar.DAY_OF_YEAR)
-                      
-        val isYesterday = logCal.get(Calendar.YEAR) == calYesterday.get(Calendar.YEAR) &&
-                          logCal.get(Calendar.DAY_OF_YEAR) == calYesterday.get(Calendar.DAY_OF_YEAR)
-                          
-        when {
-            isToday -> "Hari Ini - ${fmt.format(logDate)}"
-            isYesterday -> "Kemarin - ${fmt.format(logDate)}"
-            else -> fmt.format(logDate)
+        when (key) {
+            todayKey -> "Hari Ini - ${zdt.format(fmt)}"
+            yesterdayKey -> "Kemarin - ${zdt.format(fmt)}"
+            else -> zdt.format(fmt)
         }
     }
 }

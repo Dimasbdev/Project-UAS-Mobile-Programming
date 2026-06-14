@@ -69,15 +69,7 @@ import id.ac.umkt.kel_10_mk.projectuas.ui.theme.SpaceGroteskFamily
 
 @Composable
 fun HistoryMahasiswaScreen(navController: NavHostController, viewModel: ParkingViewModel) {
-    val view = LocalView.current
-    val context = LocalContext.current
-
-    SideEffect {
-        (context as? Activity)?.window?.run {
-            statusBarColor = ParkirBackground.toArgb()
-            WindowCompat.getInsetsController(this, view).isAppearanceLightStatusBars = false
-        }
-    }
+    id.ac.umkt.kel_10_mk.projectuas.ui.components.SetDarkStatusBar()
 
     var selectedFilter by remember { mutableIntStateOf(0) }
     val logs by viewModel.activityLogs.collectAsStateWithLifecycle()

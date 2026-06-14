@@ -75,15 +75,7 @@ import id.ac.umkt.kel_10_mk.projectuas.ui.theme.SpaceGroteskFamily
 
 @Composable
 fun MapPetugasScreen(navController: NavHostController, parkingViewModel: ParkingViewModel) {
-    val view = androidx.compose.ui.platform.LocalView.current
-    val context = androidx.compose.ui.platform.LocalContext.current
-
-    SideEffect {
-        (context as? Activity)?.window?.run {
-            statusBarColor = ParkirBackground.toArgb()
-            WindowCompat.getInsetsController(this, view).isAppearanceLightStatusBars = false
-        }
-    }
+    id.ac.umkt.kel_10_mk.projectuas.ui.components.SetDarkStatusBar()
 
     val parkingAreas by parkingViewModel.parkingAreas.collectAsStateWithLifecycle()
 

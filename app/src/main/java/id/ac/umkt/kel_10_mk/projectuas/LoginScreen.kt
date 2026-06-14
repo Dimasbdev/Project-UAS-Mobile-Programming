@@ -80,15 +80,7 @@ fun LoginScreen(
     onForgotClick: () -> Unit,
     isLoading: Boolean = false,
 ) {
-    val view = LocalView.current
-    val context = LocalContext.current
-
-    SideEffect {
-        (context as? Activity)?.window?.run {
-            statusBarColor = ParkirBackground.toArgb()
-            WindowCompat.getInsetsController(this, view).isAppearanceLightStatusBars = false
-        }
-    }
+    id.ac.umkt.kel_10_mk.projectuas.ui.components.SetDarkStatusBar()
 
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }

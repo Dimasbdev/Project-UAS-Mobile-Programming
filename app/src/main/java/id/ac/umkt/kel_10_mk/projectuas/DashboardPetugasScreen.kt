@@ -21,6 +21,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
+import id.ac.umkt.kel_10_mk.projectuas.ui.components.ParkingStatusSummaryCard
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Map
@@ -68,15 +69,7 @@ fun DashboardPetugasScreen(
     parkingViewModel: ParkingViewModel,
     officerName: String
 ) {
-    val view = androidx.compose.ui.platform.LocalView.current
-    val context = androidx.compose.ui.platform.LocalContext.current
-
-    SideEffect {
-        (context as? Activity)?.window?.run {
-            statusBarColor = ParkirBackground.toArgb()
-            WindowCompat.getInsetsController(this, view).isAppearanceLightStatusBars = false
-        }
-    }
+    id.ac.umkt.kel_10_mk.projectuas.ui.components.SetDarkStatusBar()
 
     val areas by parkingViewModel.parkingAreas.collectAsStateWithLifecycle()
     val summary = remember(areas) {
@@ -106,11 +99,7 @@ fun DashboardPetugasScreen(
             item { PetugasHeader(officerName) }
             item { RoleChip() }
             item {
-                StatusSummaryCard(
-                    sepiCount = summary[ParkingStatus.SEPI] ?: 0,
-                    sedangCount = summary[ParkingStatus.SEDANG] ?: 0,
-                    penuhCount = summary[ParkingStatus.PENUH] ?: 0,
-                )
+                ParkingStatusSummaryCard(areas = areas)
             }
             item {
                 Text(
@@ -173,66 +162,6 @@ private fun RoleChip() {
             color = ParkirAccent,
             fontWeight = FontWeight.SemiBold,
             fontSize = 12.sp,
-        )
-    }
-}
-
-@Composable
-private fun StatusSummaryCard(
-    sepiCount: Int,
-    sedangCount: Int,
-    penuhCount: Int,
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(ParkirSurface, RoundedCornerShape(18.dp))
-            .border(BorderStroke(1.dp, ParkirDivider), RoundedCornerShape(18.dp))
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        Text(
-            text = "Status Parkir Kampus",
-            color = ParkirTextPrimary,
-            fontFamily = SpaceGroteskFamily,
-            fontWeight = FontWeight.SemiBold,
-            fontSize = 16.sp,
-        )
-        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            StatusPill(label = "$sepiCount Area Sepi", color = ParkirAccent)
-            StatusPill(label = "$sedangCount Area Sedang", color = ParkirWarning)
-        }
-        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            StatusPill(label = "$penuhCount Area Penuh", color = ParkirDanger)
-        }
-        Text(
-            text = "Terakhir diperbarui 3 menit lalu",
-            color = ParkirTextSecondary,
-            fontSize = 12.sp,
-        )
-    }
-}
-
-@Composable
-private fun StatusPill(label: String, color: Color) {
-    Row(
-        modifier = Modifier
-            .background(color.copy(alpha = 0.12f), RoundedCornerShape(999.dp))
-            .border(BorderStroke(1.dp, color.copy(alpha = 0.4f)), RoundedCornerShape(999.dp))
-            .padding(horizontal = 12.dp, vertical = 6.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        Box(
-            modifier = Modifier
-                .size(8.dp)
-                .background(color, CircleShape),
-        )
-        Text(
-            text = label,
-            color = color,
-            fontSize = 12.sp,
-            fontWeight = FontWeight.SemiBold,
         )
     }
 }

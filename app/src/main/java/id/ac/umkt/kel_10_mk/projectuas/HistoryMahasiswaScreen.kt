@@ -256,7 +256,7 @@ internal fun HistoryAnalyticsCard(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(160.dp)
+                .height(220.dp)
                 .clip(RoundedCornerShape(12.dp))
                 .background(ParkirMapSurface)
                 .padding(horizontal = 16.dp, vertical = 12.dp),
@@ -269,7 +269,10 @@ internal fun HistoryAnalyticsCard(
                     fontSize = 13.sp,
                 )
             } else {
-                ParkirBarChart(data = chartData)
+                ParkirBarChart(
+                    data = chartData,
+                    modifier = Modifier.fillMaxSize()
+                )
             }
         }
     }

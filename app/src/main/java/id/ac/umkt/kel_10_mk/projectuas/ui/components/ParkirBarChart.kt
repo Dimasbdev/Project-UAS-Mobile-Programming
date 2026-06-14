@@ -1,13 +1,18 @@
 package id.ac.umkt.kel_10_mk.projectuas.ui.components
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -29,20 +34,22 @@ fun ParkirBarChart(
     modifier: Modifier = Modifier
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
-        Row(modifier = Modifier.weight(1f).fillMaxWidth()) {
-            // Y-Axis Labels
-            Column(
-                modifier = Modifier
-                    .fillMaxHeight()
-                    .padding(end = 8.dp),
-                verticalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text("PENUH", color = ParkirTextSecondary, fontSize = 10.sp)
-                Text("SEDANG", color = ParkirTextSecondary, fontSize = 10.sp)
-                Text("SEPI", color = ParkirTextSecondary, fontSize = 10.sp)
-                Text("", color = ParkirTextSecondary, fontSize = 10.sp) // Base line
-            }
+        // Legend
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 16.dp),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            LegendItem(color = ParkirDanger, label = "Penuh")
+            Spacer(modifier = Modifier.width(16.dp))
+            LegendItem(color = ParkirWarning, label = "Sedang")
+            Spacer(modifier = Modifier.width(16.dp))
+            LegendItem(color = ParkirAccent, label = "Sepi")
+        }
 
+        Row(modifier = Modifier.weight(1f).fillMaxWidth()) {
             // Chart Canvas
             Box(modifier = Modifier.weight(1f).fillMaxHeight()) {
                 Canvas(modifier = Modifier.fillMaxSize()) {
@@ -100,7 +107,7 @@ fun ParkirBarChart(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(top = 8.dp, start = 36.dp), // offset by Y-axis width approx
+                .padding(top = 8.dp),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             data.forEach { point ->
@@ -113,5 +120,23 @@ fun ParkirBarChart(
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun LegendItem(color: Color, label: String) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Box(
+            modifier = Modifier
+                .size(10.dp)
+                .clip(RoundedCornerShape(2.dp))
+                .background(color)
+        )
+        Spacer(modifier = Modifier.width(6.dp))
+        Text(
+            text = label,
+            color = ParkirTextSecondary,
+            fontSize = 11.sp
+        )
     }
 }

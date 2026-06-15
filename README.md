@@ -15,9 +15,9 @@ Aplikasi ini memiliki 2 peran (Role) pengguna dengan fungsionalitas yang disesua
 ### 2. Petugas Parkir (Update)
 - Memperbarui kondisi area parkir secara real-time dengan sekali klik.
 - Menerapkan **3 Status Parkir** sederhana (Tanpa Persentase):
-  - **SEPI** (Ruang parkir tersedia luas)
-  - **SEDANG** (Cukup ramai)
-  - **PENUH** (Tidak ada ruang tersedia)
+  - 🟢 **SEPI** (Ruang parkir tersedia luas)
+  - 🟡 **SEDANG** (Cukup ramai)
+  - 🔴 **PENUH** (Tidak ada ruang tersedia)
 - Semua riwayat dan waktu pembaruan otomatis dicatat dalam zona waktu **WITA (UTC+8)**.
 
 ## Teknologi & Arsitektur
@@ -35,7 +35,7 @@ Aplikasi ini memiliki 2 peran (Role) pengguna dengan fungsionalitas yang disesua
 
 Aplikasi ini menggunakan Cloud Firestore dengan struktur NoSQL:
 
-- `parkir_areas/` : Koleksi yang menyimpan data tiap area parkir (contoh: `parkiran_a`, `parkiran_b`), berisi status terkini (`SEPI` | `SEDANG` | `PENUH`), waktu update (`updatedAt`), dan identitas petugas yang melakukan update (`updatedBy`).
+- `parkir_areas/` : Koleksi yang menyimpan data tiap area parkir (contoh: `parkiran_a`, `parkiran_b`), berisi status terkini (🟢 `SEPI` | 🟡 `SEDANG` | 🔴 `PENUH`), waktu update (`updatedAt`), dan identitas petugas yang melakukan update (`updatedBy`).
 - `users/` : Koleksi yang menyimpan informasi pengguna terdaftar, termasuk pembagian role otorisasi (`mahasiswa` atau `petugas`).
 
 ## Cara Menjalankan Project Secara Lokal
@@ -47,10 +47,19 @@ Aplikasi ini menggunakan Cloud Firestore dengan struktur NoSQL:
 2. Buka project menggunakan Android Studio versi terbaru.
 3. Siapkan file konfigurasi Firebase:
    - Salin file `app/google-services.json.example` di dalam direktori `app/` dan ubah namanya menjadi `app/google-services.json`.
-   - Hubungkan project dengan Firebase milik Anda sendiri dengan memperbarui nilai-nilai di dalam file `app/google-services.json` tersebut (atau gunakan file dari project Firebase yang telah dibagikan oleh tim secara privat).
-4. Lakukan Sync Project with Gradle Files untuk mengunduh semua dependensi.
-5. Jalankan aplikasi (Run) pada Android Emulator atau perangkat Android asli (Minimal Android 7.0 / API 24).
-6. Pastikan koneksi internet aktif untuk sinkronisasi data real-time.
+   - Hubungkan project dengan Firebase milik Anda sendiri dengan memperbarui nilai-nilai di dalam file `app/google-services.json` tersebut (atau gunakan file dari project Firebase yang telah dibagikan secara privat).
+4. Konfigurasi Google Maps SDK:
+   - Buka file `local.properties` di direktori utama project (jika belum ada, Anda bisa membuatnya secara manual).
+   - Tambahkan baris berikut dan masukkan API Key Google Maps Anda:
+     ```properties
+     MAPS_API_KEY=YOUR_GOOGLE_MAPS_API_KEY
+     ```
+5. Siapkan Firebase Console Anda:
+   - Aktifkan fitur Authentication dengan metode masuk Email & Password.
+   - Buat database Cloud Firestore dan terapkan aturan akses keamanan yang ada di dalam file `firestore.rules` project ini.
+6. Lakukan Sync Project with Gradle Files untuk mengunduh semua dependensi.
+7. Jalankan aplikasi (Run) pada Android Emulator atau perangkat Android asli (Minimal Android 7.0 / API 24).
+8. Pastikan koneksi internet aktif untuk sinkronisasi data real-time.
 
 ---
 *Project UAS - Mata Kuliah Pemrograman Perangkat Bergerak*

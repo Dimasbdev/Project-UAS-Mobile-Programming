@@ -76,6 +76,20 @@ fun ProfilePetugasScreen(
 
     var showLogoutDialog by remember { mutableStateOf(false) }
 
+    val context = LocalContext.current
+    androidx.compose.runtime.LaunchedEffect(Unit) {
+        viewModel.uiEvent.collect { event ->
+            when (event) {
+                "DUMMY_DATA_SUCCESS" -> {
+                    android.widget.Toast.makeText(context, "Data simulasi berhasil dibuat!", android.widget.Toast.LENGTH_SHORT).show()
+                }
+                "DUMMY_DATA_FAILURE" -> {
+                    android.widget.Toast.makeText(context, "Gagal membuat data simulasi.", android.widget.Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    }
+
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         containerColor = ParkirBackground,

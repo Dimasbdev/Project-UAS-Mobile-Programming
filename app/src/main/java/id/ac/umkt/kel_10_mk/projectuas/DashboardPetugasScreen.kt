@@ -206,8 +206,13 @@ private fun PetugasAreaCard(area: ParkingArea, navController: NavHostController)
 
         ParkingStatusBar(status = area.status, color = statusColor)
 
+        val updateText = if (area.updatedAgoLabel == "Belum pernah diperbarui") {
+            "Belum pernah diperbarui"
+        } else {
+            "Diperbarui ${area.updatedAgoLabel.ifEmpty { "baru saja" }}"
+        }
         Text(
-            text = "Diperbarui ${area.updatedAgoLabel.ifEmpty { "baru saja" }}",
+            text = updateText,
             color = ParkirTextSecondary,
             fontSize = 12.sp,
         )

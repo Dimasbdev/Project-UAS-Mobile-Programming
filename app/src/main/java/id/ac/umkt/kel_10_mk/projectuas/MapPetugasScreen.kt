@@ -89,7 +89,7 @@ fun MapPetugasScreen(navController: NavHostController, parkingViewModel: Parking
             )
         },
     ) { paddingValues ->
-        Column(
+        LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
                 .background(ParkirBackground)
@@ -98,35 +98,42 @@ fun MapPetugasScreen(navController: NavHostController, parkingViewModel: Parking
                 .padding(horizontal = 20.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            ParkirTopBar(showAction = false)
+            item {
+                ParkirTopBar(showAction = false)
+            }
 
-            Text(
-                text = "Peta Parkir Kampus",
-                color = ParkirTextPrimary,
-                fontFamily = SpaceGroteskFamily,
-                fontWeight = FontWeight.SemiBold,
-                fontSize = 24.sp,
-            )
+            item {
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text(
+                        text = "Peta Parkir Kampus",
+                        color = ParkirTextPrimary,
+                        fontFamily = SpaceGroteskFamily,
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 24.sp,
+                    )
 
-            Text(
-                text = "Pantau dan update area parkir",
-                color = ParkirTextSecondary,
-                fontSize = 13.sp,
-            )
-
-            ParkingGoogleMap(parkingAreas = parkingAreas)
-            ParkingLegendRow()
-
-            LazyColumn(
-                modifier = Modifier.fillMaxWidth().weight(1f),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                items(parkingAreas) { area ->
-                    MarkerRow(area = area)
+                    Text(
+                        text = "Pantau dan update area parkir",
+                        color = ParkirTextSecondary,
+                        fontSize = 13.sp,
+                    )
                 }
-                item {
-                    Spacer(modifier = Modifier.height(12.dp))
-                }
+            }
+
+            item {
+                ParkingGoogleMap(parkingAreas = parkingAreas)
+            }
+
+            item {
+                ParkingLegendRow()
+            }
+
+            items(parkingAreas) { area ->
+                MarkerRow(area = area)
+            }
+
+            item {
+                Spacer(modifier = Modifier.height(16.dp))
             }
         }
     }

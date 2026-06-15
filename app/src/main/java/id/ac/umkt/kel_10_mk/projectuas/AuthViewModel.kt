@@ -48,11 +48,6 @@ class AuthViewModel(
                 val profile = repository.fetchCurrentUserProfile()
                 if (profile != null) {
                     uiState = AuthUiState.Success(profile)
-                    if (profile.role == "petugas") {
-                        _navigationEvent.send(RouteDashboardPetugas)
-                    } else {
-                        _navigationEvent.send(RouteDashboardMahasiswa)
-                    }
                 }
             } catch (e: Exception) {
                 // Ignore or handle

@@ -41,27 +41,48 @@ class ParkingViewModel(
     private val _logsLimit = MutableStateFlow(50)
     val logsLimit: StateFlow<Int> = _logsLimit.asStateFlow()
 
-    val activityLogs: StateFlow<List<ActivityLog>> = _logsLimit
-        .flatMapLatest { limit -> repository.getActivityLogs(limit) }
-        .catch { emit(emptyList()) }
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5_000),
-            initialValue = emptyList()
-        )
+    private val _activityLogs = MutableStateFlow<List<ActivityLog>>(emptyList())
+    val activityLogs: StateFlow<List<ActivityLog>> = _activityLogs.asStateFlow()
+
+    private var parkingAreasJob: Job? = null
+    private var analyticsLogsJob: Job? = null
+    private var activityLogsJob: Job? = null
 
     init {
+        refreshParkingData()
+    }
+
+    fun refreshParkingData() {
         observeParkingAreas()
         observeAnalyticsLogs()
+        observeActivityLogs()
+    }
+
+    @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
+    private fun observeActivityLogs() {
+        activityLogsJob?.cancel()
+        activityLogsJob = viewModelScope.launch {
+            _logsLimit
+                .flatMapLatest { limit -> repository.getActivityLogs(limit) }
+                .catch { e ->
+                    android.util.Log.e("ParkingViewModel", "FIRESTORE_ERROR: Error in activityLogs flow", e)
+                    emit(emptyList())
+                }
+                .collect { logs ->
+                    _activityLogs.value = logs
+                }
+        }
     }
 
     private fun observeAnalyticsLogs() {
         val cal = Calendar.getInstance()
         cal.add(Calendar.DAY_OF_YEAR, -7)
         val cutoff = Timestamp(cal.time)
-        viewModelScope.launch {
+        analyticsLogsJob?.cancel()
+        analyticsLogsJob = viewModelScope.launch {
             repository.getLogsAfter(cutoff)
-                .catch {
+                .catch { e ->
+                    android.util.Log.e("ParkingViewModel", "FIRESTORE_ERROR: Error in observeAnalyticsLogs flow", e)
                     _analyticsLogs.value = emptyList()
                 }
                 .collect { logs ->
@@ -75,9 +96,11 @@ class ParkingViewModel(
     }
 
     private fun observeParkingAreas() {
-        viewModelScope.launch {
+        parkingAreasJob?.cancel()
+        parkingAreasJob = viewModelScope.launch {
             repository.getParkingAreas()
-                .catch {
+                .catch { e ->
+                    android.util.Log.e("ParkingViewModel", "FIRESTORE_ERROR: Error in getParkingAreas flow", e)
                     // Jika gagal (misal koneksi bermasalah), gunakan data mock sebagai fallback
                     useMockFallback()
                 }
@@ -126,9 +149,24 @@ class ParkingViewModel(
     fun generateDummyData() {
         viewModelScope.launch {
             _isLoading.value = true
-            repository.generateDummyData()
-            _uiEvent.emit("DUMMY_DATA_SUCCESS")
-            _isLoading.value = false
+            try {
+                repository.generateDummyData()
+                _uiEvent.emit("DUMMY_DATA_SUCCESS")
+            } catch (e: Exception) {
+                android.util.Log.e("ParkingViewModel", "Failed to generate dummy data", e)
+                _uiEvent.emit("DUMMY_DATA_FAILURE")
+            } finally {
+                _isLoading.value = false
+            }
         }
+    }
+
+    fun clearData() {
+        parkingAreasJob?.cancel()
+        analyticsLogsJob?.cancel()
+        activityLogsJob?.cancel()
+        _parkingAreas.value = emptyList()
+        _analyticsLogs.value = emptyList()
+        _activityLogs.value = emptyList()
     }
 }

@@ -49,8 +49,14 @@ fun AppNavigation(
 
     LaunchedEffect(authViewModel.uiState) {
         when (val state = authViewModel.uiState) {
+            is AuthUiState.Success -> {
+                parkingViewModel.refreshParkingData()
+            }
             is AuthUiState.Error -> {
                 Toast.makeText(context, state.message, Toast.LENGTH_LONG).show()
+            }
+            is AuthUiState.Idle -> {
+                parkingViewModel.clearData()
             }
             else -> {}
         }
@@ -94,9 +100,16 @@ fun AppNavigation(
             }
         }
     } else {
+        val startDest = when (val state = authViewModel.uiState) {
+            is AuthUiState.Success -> {
+                if (state.user.role == "petugas") RouteDashboardPetugas else RouteDashboardMahasiswa
+            }
+            else -> RouteLogin
+        }
+
         NavHost(
             navController = navController,
-            startDestination = RouteLogin,
+            startDestination = startDest,
         ) {
             composable(RouteLogin) {
                 val isLoading = authViewModel.uiState is AuthUiState.Loading

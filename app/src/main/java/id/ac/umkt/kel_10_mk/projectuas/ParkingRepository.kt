@@ -57,13 +57,18 @@ class ParkingRepository {
         val minutesAgo = updatedAt?.let {
             val diffMs = System.currentTimeMillis() - it.toDate().time
             (diffMs / (1000 * 60)).toInt().coerceAtLeast(0)
-        } ?: 0
+        }
+        val label = if (updatedAt == null) {
+            "Belum pernah diperbarui"
+        } else {
+            formatRelativeTime(minutesAgo ?: 0)
+        }
         return ParkingArea(
             name = name,
             location = location,
             status = status,
-            updatedMinutes = minutesAgo,
-            updatedAgoLabel = formatRelativeTime(minutesAgo),
+            updatedMinutes = minutesAgo ?: 0,
+            updatedAgoLabel = label,
             id = docId,
             updatedAtMs = updatedAt?.toDate()?.time,
             updatedBy = updatedBy,
@@ -109,7 +114,7 @@ class ParkingRepository {
                     close(error)
                     return@addSnapshotListener
                 }
-                val areas = snapshot?.documents?.mapNotNull { doc ->
+                val firestoreAreas = snapshot?.documents?.mapNotNull { doc ->
                     documentToParkingArea(
                         docId = doc.id,
                         name = doc.getString("name") ?: "",
@@ -121,8 +126,20 @@ class ParkingRepository {
                     )
                 } ?: emptyList()
 
-                // Urutkan berdasarkan ID agar urutannya konsisten (a, b, c, d)
-                trySend(areas.sortedBy { it.id })
+                val firestoreMap = firestoreAreas.associateBy { it.id }
+
+                val defaultTemplates = listOf(
+                    documentToParkingArea("parkiran_a", "Parkiran A", "Gedung A", "SEPI", null, "", ""),
+                    documentToParkingArea("parkiran_b", "Parkiran B", "Gedung B", "SEPI", null, "", ""),
+                    documentToParkingArea("parkiran_c", "Parkiran C", "Gedung C", "SEPI", null, "", ""),
+                    documentToParkingArea("parkiran_d", "Parkiran D", "Gedung D", "SEPI", null, "", "")
+                )
+
+                val merged = defaultTemplates.map { defaultArea ->
+                    firestoreMap[defaultArea.id] ?: defaultArea
+                }
+
+                trySend(merged)
             }
         awaitClose { listener.remove() }
     }
@@ -131,7 +148,18 @@ class ParkingRepository {
     suspend fun getParkingArea(id: String): ParkingArea? {
         return try {
             val doc = firestore.collection("parkir_areas").document(id).get().await()
-            if (!doc.exists()) return null
+            if (!doc.exists()) {
+                // Return default template if not created yet in database
+                return documentToParkingArea(
+                    docId = id,
+                    name = areaName(id),
+                    location = areaLocation(id),
+                    statusStr = "SEPI",
+                    updatedAt = null,
+                    updatedBy = "",
+                    notes = ""
+                )
+            }
             documentToParkingArea(
                 docId = doc.id,
                 name = doc.getString("name") ?: "",
@@ -227,7 +255,6 @@ class ParkingRepository {
     fun getLogsAfter(cutoff: Timestamp): Flow<List<ActivityLog>> = callbackFlow {
         val listener = firestore.collection("parkir_logs")
             .whereGreaterThanOrEqualTo("timestamp", cutoff)
-            .orderBy("timestamp", Query.Direction.DESCENDING)
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
                     close(error)
@@ -237,7 +264,8 @@ class ParkingRepository {
                     documentToActivityLog(doc)
                 } ?: emptyList()
 
-                trySend(logs)
+                val sortedLogs = logs.sortedByDescending { it.timestampMs ?: 0L }
+                trySend(sortedLogs)
             }
         awaitClose { listener.remove() }
     }

@@ -32,10 +32,10 @@ class ParkingRepository {
 
     // Helper: mapping ID → lokasi gedung
     private fun areaLocation(id: String) = when (id) {
-        "parkiran_a" -> "Gedung A"
-        "parkiran_b" -> "Gedung B"
-        "parkiran_c" -> "Gedung C"
-        "parkiran_d" -> "Gedung D"
+        "parkiran_a" -> "Gedung A, B, C"
+        "parkiran_b" -> "Gedung G"
+        "parkiran_c" -> "Gedung D"
+        "parkiran_d" -> "Gedung F"
         else -> "Gedung Utama"
     }
 
@@ -64,8 +64,8 @@ class ParkingRepository {
             formatRelativeTime(minutesAgo ?: 0)
         }
         return ParkingArea(
-            name = name,
-            location = location,
+            name = areaName(docId),
+            location = areaLocation(docId),
             status = status,
             updatedMinutes = minutesAgo ?: 0,
             updatedAgoLabel = label,
@@ -129,10 +129,10 @@ class ParkingRepository {
                 val firestoreMap = firestoreAreas.associateBy { it.id }
 
                 val defaultTemplates = listOf(
-                    documentToParkingArea("parkiran_a", "Parkiran A", "Gedung A", "SEPI", null, "", ""),
-                    documentToParkingArea("parkiran_b", "Parkiran B", "Gedung B", "SEPI", null, "", ""),
-                    documentToParkingArea("parkiran_c", "Parkiran C", "Gedung C", "SEPI", null, "", ""),
-                    documentToParkingArea("parkiran_d", "Parkiran D", "Gedung D", "SEPI", null, "", "")
+                    documentToParkingArea("parkiran_a", "Parkiran A", "Gedung A, B, C", "SEPI", null, "", ""),
+                    documentToParkingArea("parkiran_b", "Parkiran B", "Gedung G", "SEPI", null, "", ""),
+                    documentToParkingArea("parkiran_c", "Parkiran C", "Gedung D", "SEPI", null, "", ""),
+                    documentToParkingArea("parkiran_d", "Parkiran D", "Gedung F", "SEPI", null, "", "")
                 )
 
                 val merged = defaultTemplates.map { defaultArea ->
@@ -182,9 +182,12 @@ class ParkingRepository {
         officerName: String,
     ): Result<Unit> {
         val name = areaName(id)
+        val location = areaLocation(id)
         return try {
             val now = Timestamp.now()
             val updates = mapOf(
+                "name" to name,
+                "location" to location,
                 "status" to status.name,
                 "notes" to notes,
                 "updatedAt" to now,
@@ -208,7 +211,7 @@ class ParkingRepository {
                 val now = Timestamp.now()
                 val newData = mapOf(
                     "name" to name,
-                    "location" to areaLocation(id),
+                    "location" to location,
                     "status" to status.name,
                     "notes" to notes,
                     "updatedAt" to now,

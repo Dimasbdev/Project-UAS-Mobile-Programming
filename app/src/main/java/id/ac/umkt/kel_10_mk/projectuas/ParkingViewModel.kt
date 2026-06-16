@@ -117,10 +117,10 @@ class ParkingViewModel(
 
     private fun useMockFallback() {
         _parkingAreas.value = listOf(
-            ParkingArea("Parkiran A", "Gedung A", ParkingStatus.SEPI, 0, id = "parkiran_a"),
-            ParkingArea("Parkiran B", "Gedung B", ParkingStatus.SEDANG, 0, id = "parkiran_b"),
-            ParkingArea("Parkiran C", "Gedung C", ParkingStatus.PENUH, 0, id = "parkiran_c"),
-            ParkingArea("Parkiran D", "Gedung D", ParkingStatus.SEPI, 0, id = "parkiran_d"),
+            ParkingArea("Parkiran A", "Gedung A, B, C", ParkingStatus.SEPI, 0, id = "parkiran_a"),
+            ParkingArea("Parkiran B", "Gedung G", ParkingStatus.SEDANG, 0, id = "parkiran_b"),
+            ParkingArea("Parkiran C", "Gedung D", ParkingStatus.PENUH, 0, id = "parkiran_c"),
+            ParkingArea("Parkiran D", "Gedung F", ParkingStatus.SEPI, 0, id = "parkiran_d"),
         )
     }
 

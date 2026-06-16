@@ -100,7 +100,7 @@ Visual indicator: 3-segment bar (NOT percentage bar)
 parkir_areas/
   ├── parkiran_a/
   │     ├── name: "Parkiran A"
-  │     ├── location: "Gedung A"
+  │     ├── location: "Gedung A, B, C"
   │     ├── status: "SEPI" | "SEDANG" | "PENUH"
   │     ├── updatedAt: timestamp (WITA)
   │     ├── updatedBy: "Petugas Parkir"
@@ -122,10 +122,10 @@ users/
 ## Parking Areas
 | ID | Name | Location |
 |---|---|----------|
-| parkiran_a | Parkiran A | Gedung A |
-| parkiran_b | Parkiran B | Gedung B |
-| parkiran_c | Parkiran C | Gedung C |
-| parkiran_d | Parkiran D | Gedung D |
+| parkiran_a | Parkiran A | Gedung A, B, C |
+| parkiran_b | Parkiran B | Gedung G |
+| parkiran_c | Parkiran C | Gedung D |
+| parkiran_d | Parkiran D | Gedung F |
 
 ---
 

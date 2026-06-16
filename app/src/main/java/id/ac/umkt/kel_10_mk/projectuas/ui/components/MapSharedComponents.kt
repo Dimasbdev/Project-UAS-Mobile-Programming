@@ -37,14 +37,14 @@ import id.ac.umkt.kel_10_mk.projectuas.models.ParkingArea
 import id.ac.umkt.kel_10_mk.projectuas.ui.theme.*
 
 val parkingAreaLatLng = mapOf(
-    "parkiran_a" to LatLng(-0.482065, 117.150493),
-    "parkiran_b" to LatLng(-0.482500, 117.150850),
-    "parkiran_c" to LatLng(-0.482900, 117.151150),
-    "parkiran_d" to LatLng(-0.481800, 117.151300)
+    "parkiran_a" to LatLng(-0.474661, 117.138287),
+    "parkiran_b" to LatLng(-0.474522, 117.139090),
+    "parkiran_c" to LatLng(-0.475096, 117.139623),
+    "parkiran_d" to LatLng(-0.474456, 117.140005)
 )
 
 fun getLatLngForArea(areaId: String): LatLng {
-    return parkingAreaLatLng[areaId] ?: LatLng(-0.4822, 117.1508)
+    return parkingAreaLatLng[areaId] ?: LatLng(-0.474776, 117.139146)
 }
 
 @Composable
@@ -67,7 +67,7 @@ fun ParkingGoogleMap(parkingAreas: List<ParkingArea>) {
         ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
     }
 
-    val umktCenter = LatLng(-0.4822, 117.1508)
+    val umktCenter = LatLng(-0.474776, 117.139146)
     val cameraPositionState = rememberCameraPositionState {
         position = CameraPosition.fromLatLngZoom(umktCenter, 16.5f)
     }

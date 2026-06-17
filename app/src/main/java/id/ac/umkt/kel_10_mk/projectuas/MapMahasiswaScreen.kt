@@ -36,6 +36,11 @@ import androidx.compose.runtime.collectAsState
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.ui.platform.LocalContext
+import id.ac.umkt.kel_10_mk.projectuas.ui.components.getLatLngForArea
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -73,11 +78,105 @@ import id.ac.umkt.kel_10_mk.projectuas.ui.theme.ParkirTextSecondary
 import id.ac.umkt.kel_10_mk.projectuas.ui.theme.ParkirWarning
 import id.ac.umkt.kel_10_mk.projectuas.ui.theme.SpaceGroteskFamily
 
+private fun calculateDistance(start: LatLng, end: LatLng): Float {
+    val results = FloatArray(1)
+    android.location.Location.distanceBetween(
+        start.latitude, start.longitude,
+        end.latitude, end.longitude,
+        results
+    )
+    return results[0]
+}
+
 @Composable
 fun MapMahasiswaScreen(navController: NavHostController, parkingViewModel: ParkingViewModel) {
     id.ac.umkt.kel_10_mk.projectuas.ui.components.SetDarkStatusBar()
 
+    val context = LocalContext.current
     val parkingAreas by parkingViewModel.parkingAreas.collectAsStateWithLifecycle()
+    var userLocation by remember { mutableStateOf<LatLng?>(null) }
+
+    val hasPermission = remember {
+        ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED ||
+        ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
+    }
+
+    DisposableEffect(hasPermission) {
+        if (hasPermission) {
+            val locationManager = context.getSystemService(android.content.Context.LOCATION_SERVICE) as? android.location.LocationManager
+            if (locationManager != null) {
+                val lastGps = try { locationManager.getLastKnownLocation(android.location.LocationManager.GPS_PROVIDER) } catch (e: SecurityException) { null }
+                val lastNetwork = try { locationManager.getLastKnownLocation(android.location.LocationManager.NETWORK_PROVIDER) } catch (e: SecurityException) { null }
+                val bestLast = lastGps ?: lastNetwork
+                if (bestLast != null) {
+                    userLocation = LatLng(bestLast.latitude, bestLast.longitude)
+                }
+
+                val listener = object : android.location.LocationListener {
+                    override fun onLocationChanged(location: android.location.Location) {
+                        userLocation = LatLng(location.latitude, location.longitude)
+                    }
+                    @Deprecated("Deprecated in Java")
+                    override fun onStatusChanged(provider: String?, status: Int, extras: android.os.Bundle?) {}
+                    override fun onProviderEnabled(provider: String) {}
+                    override fun onProviderDisabled(provider: String) {}
+                }
+
+                try {
+                    locationManager.requestLocationUpdates(
+                        android.location.LocationManager.GPS_PROVIDER,
+                        5000L,
+                        5f,
+                        listener
+                    )
+                    locationManager.requestLocationUpdates(
+                        android.location.LocationManager.NETWORK_PROVIDER,
+                        5000L,
+                        5f,
+                        listener
+                    )
+                } catch (e: SecurityException) {
+                    // Ignore
+                }
+
+                onDispose {
+                    try {
+                        locationManager.removeUpdates(listener)
+                    } catch (e: Exception) {
+                        // Ignore
+                    }
+                }
+            } else {
+                onDispose {}
+            }
+        } else {
+            onDispose {}
+        }
+    }
+
+    val areasWithDistance = remember(parkingAreas, userLocation) {
+        parkingAreas.map { area ->
+            val latLng = getLatLngForArea(area.id)
+            val distance = userLocation?.let { calculateDistance(it, latLng) }
+            area to distance
+        }.sortedWith { a, b ->
+            val distA = a.second
+            val distB = b.second
+            when {
+                distA == null && distB == null -> 0
+                distA == null -> 1
+                distB == null -> -1
+                else -> distA.compareTo(distB)
+            }
+        }
+    }
+
+    val recommendedAreaId = remember(areasWithDistance) {
+        areasWithDistance
+            .filter { (area, distance) -> distance != null && (area.status == ParkingStatus.SEPI || area.status == ParkingStatus.SEDANG) }
+            .minByOrNull { it.second!! }
+            ?.first?.id
+    }
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -130,8 +229,12 @@ fun MapMahasiswaScreen(navController: NavHostController, parkingViewModel: Parki
                 ParkingLegendRow()
             }
 
-            items(parkingAreas) { area ->
-                MarkerRow(area = area)
+            items(areasWithDistance) { (area, distance) ->
+                MarkerRow(
+                    area = area,
+                    distance = distance,
+                    isRecommended = area.id == recommendedAreaId
+                )
             }
 
             item {
@@ -144,7 +247,11 @@ fun MapMahasiswaScreen(navController: NavHostController, parkingViewModel: Parki
 
 
 @Composable
-private fun MarkerRow(area: ParkingArea) {
+private fun MarkerRow(
+    area: ParkingArea,
+    distance: Float?,
+    isRecommended: Boolean
+) {
     val statusColor = when (area.status) {
         ParkingStatus.SEPI -> ParkirAccent
         ParkingStatus.SEDANG -> ParkirWarning
@@ -155,23 +262,76 @@ private fun MarkerRow(area: ParkingArea) {
         modifier = Modifier
             .fillMaxWidth()
             .background(ParkirSurface, RoundedCornerShape(14.dp))
-            .border(BorderStroke(1.dp, ParkirDivider), RoundedCornerShape(14.dp))
+            .border(
+                BorderStroke(
+                    1.dp,
+                    if (isRecommended) ParkirAccent.copy(alpha = 0.5f) else ParkirDivider
+                ),
+                RoundedCornerShape(14.dp)
+            )
             .padding(14.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            Text(
-                text = area.name,
-                color = ParkirTextPrimary,
-                fontWeight = FontWeight.SemiBold,
-                fontSize = 14.sp,
-            )
-            Text(
-                text = area.location,
-                color = ParkirTextSecondary,
-                fontSize = 12.sp,
-            )
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            modifier = Modifier.weight(1f)
+        ) {
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    Text(
+                        text = area.name,
+                        color = ParkirTextPrimary,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 15.sp,
+                        fontFamily = SpaceGroteskFamily,
+                    )
+                    if (isRecommended) {
+                        Box(
+                            modifier = Modifier
+                                .background(ParkirAccent.copy(alpha = 0.15f), RoundedCornerShape(6.dp))
+                                .border(BorderStroke(1.dp, ParkirAccent.copy(alpha = 0.5f)), RoundedCornerShape(6.dp))
+                                .padding(horizontal = 6.dp, vertical = 2.dp)
+                        ) {
+                            Text(
+                                text = "TERDEKAT & SEPI",
+                                color = ParkirAccent,
+                                fontSize = 9.sp,
+                                fontWeight = FontWeight.Bold,
+                                letterSpacing = 0.5.sp,
+                                fontFamily = SpaceGroteskFamily,
+                            )
+                        }
+                    }
+                }
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    Text(
+                        text = area.location,
+                        color = ParkirTextSecondary,
+                        fontSize = 12.sp,
+                    )
+                    if (distance != null) {
+                        Text(
+                            text = "•",
+                            color = ParkirTextSecondary,
+                            fontSize = 12.sp,
+                        )
+                        Text(
+                            text = if (distance < 1000) "${distance.toInt()} m" else String.format(java.util.Locale.US, "%.1f km", distance / 1000f),
+                            color = ParkirAccent,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Medium,
+                        )
+                    }
+                }
+            }
         }
         StatusBadge(status = area.status, color = statusColor)
     }
